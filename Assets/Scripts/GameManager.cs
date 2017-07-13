@@ -6,25 +6,38 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
+    public GameObject Selection;
+
     public Sprite[] cursors;
     public Sprite[] lines;
 
+    public bool commandSelected;
 
     void Start ()
     {
         if (!instance)
-            instance = this;
+            instance = this; 
         else Destroy(gameObject);
-        
 	}
 	
 	void Update ()
     {
-        Command temp = null;
-        Touch input = Input.GetTouch(0);
-        if (input.phase == TouchPhase.Began)
-             temp = new Command(0, 0, Vector3.zero, input.position);
-        if (input.phase == TouchPhase.Moved)
-            temp.moveCursor(input.position);
+        if (!commandSelected)
+        {
+            Touch input = Input.GetTouch(0);
+
+            if (input.phase == TouchPhase.Began)
+                Selection = Checkselection(input.position);
+        }
+    }
+
+    GameObject Checkselection(Vector3 point)
+    {
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(point);
+
+        if (Physics.Raycast(ray, out hit))
+            return hit.transform.gameObject;
+        return null;
     }
 }
