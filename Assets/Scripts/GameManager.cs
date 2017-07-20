@@ -1,10 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
+    
+    public static int[] teamPoints = new int[4];
+
     public static List<Unit> units = new List<Unit>();
+    public static List<CapturePoint> captures = new List<CapturePoint>();
+
+    public static List<Unit> unitsMoving = new List<Unit>();
 
     public ISelectable Selection;
 
@@ -13,25 +20,15 @@ public class GameManager : MonoBehaviour
         if (!instance)
             instance = this; 
         else Destroy(gameObject);
+
+        Cursor.lockState = CursorLockMode.Confined;
+        Screen.orientation = ScreenOrientation.LandscapeLeft;
 	}
 
     private void Update ()
     {
-        //Touch Input
-        if (Input.touchCount != 0)
-        {
-            Touch input = Input.GetTouch(0);
-
-            if (input.phase == TouchPhase.Began)
-            {
-                CheckSelection(input.position);
-
-                if (Selection != null)
-                    Selection.Selected();
-            }
-        }
-        //Mouse Input
-        else if (Input.GetButtonDown("Fire1"))
+        // Input
+        if (Input.GetButtonDown("Click"))
         {
             CheckSelection(Input.mousePosition);
 
@@ -39,19 +36,15 @@ public class GameManager : MonoBehaviour
                 Selection.Selected();
         }
         else if (Input.GetKeyDown(KeyCode.Space))
-            Endturn();
+            StartTurn();
 
+        // If somthing was selected
         if (Selection != null)
             Debug.Log(Selection);
     }
 
-    void Endturn()
-    {
-        for (int i = 0; i < units.Count; i++)
-            StartCoroutine(units[i].InvokeCommands());
-    }    
-
-    void CheckSelection(Vector3 point)
+    // Selection Functions
+    private void CheckSelection(Vector3 point)
     {
         RaycastHit hit = ScreenRay(point);
         ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
@@ -66,7 +59,33 @@ public class GameManager : MonoBehaviour
     {
         RaycastHit hit;
         Ray ray = Camera.main.ScreenPointToRay(point);
-        if (Physics.Raycast(ray, out hit, 15, LayerMask.GetMask("Selectable"))) { }
+        Physics.Raycast(ray, out hit, 15, LayerMask.GetMask("Selectable"));
         return hit;
+    }
+
+    // GameTurn Functions
+    public void StartTurn()
+    {
+        StartCoroutine(RunTurn());
+    }
+
+    private IEnumerator RunTurn()
+    {
+        yield return WaitForUnits();
+        Endturn();
+    }
+    private IEnumerator WaitForUnits()
+    {
+        for (int i = 0; i < units.Count; i++)
+            StartCoroutine(units[i].InvokeCommands());
+
+        while (unitsMoving.Count > 0)
+            yield return null;
+    }
+
+    private void Endturn()
+    {
+        for (int i = 0; i < captures.Count; i++)
+            captures[i].CalculateCapture();
     }
 }

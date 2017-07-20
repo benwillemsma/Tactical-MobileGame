@@ -10,6 +10,8 @@ public class CommandUI : MonoBehaviour, ISelectable
     protected GameObject line;
     public Command CommandPoint;
 
+    public GameObject gameobject { get { return gameObject; } }
+
     //Interface Functinos
     public virtual void Selected()
     {
@@ -18,15 +20,7 @@ public class CommandUI : MonoBehaviour, ISelectable
         tempCmd.Selected();
     }
 
-    public void Action(Vector3 direction)
-    {
-        unit.Deselected();
-    }
-
-    public void DoubleClicked()
-    {
-
-    }
+    public void Action(Vector3 direction) { }
 
     public virtual void Deselected()
     {

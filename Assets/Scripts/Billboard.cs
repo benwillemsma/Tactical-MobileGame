@@ -4,6 +4,6 @@ public class Billboard : MonoBehaviour
 {
 	void Update ()
     {
-        transform.LookAt(Vector3.ProjectOnPlane(transform.position - Camera.main.transform.position, Camera.main.transform.forward));
+        transform.eulerAngles = Vector3.ProjectOnPlane(new Vector3(transform.eulerAngles.x, -180, 0), Camera.main.transform.forward);
 	}
 }
