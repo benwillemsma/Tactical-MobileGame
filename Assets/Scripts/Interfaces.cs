@@ -1,6 +1,9 @@
-﻿
-interface IClickable
+﻿using UnityEngine;
+
+public interface ISelectable
 {
-    void HasBeenClicked();
-    void HasBeenDoubleClicked();
+    void Selected();
+    void Action(Vector3 point);
+    void DoubleClicked();
+    void Deselected();
 }
