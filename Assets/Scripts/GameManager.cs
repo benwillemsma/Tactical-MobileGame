@@ -6,17 +6,20 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
     
-    public static int[] teamPoints = new int[4];
+    public static int[] teamPoints = new int[4];                                                                        // winning Point values for each team.
+    public static Color[] teamColors = new Color[] {Color.grey, Color.blue, Color.red, Color.yellow, Color.green };
 
-    public static List<Unit> units = new List<Unit>();
-    public static List<CapturePoint> captures = new List<CapturePoint>();
+    public static List<Unit> units = new List<Unit>();                                                                  // All Units in the game
+    public static List<Unit> unitsMoving = new List<Unit>();                                                            // All Units That need to Execute orders
 
-    public static List<Unit> unitsMoving = new List<Unit>();
+    public static List<CapturePoint> captures = new List<CapturePoint>();                                               // All CapturePoints in the game
 
-    public ISelectable Selection;
+
+    public Queue<ISelectable> Selection = new Queue<ISelectable>();                                                     // Current Selection
 
     private void Start ()
     {
+
         if (!instance)
             instance = this; 
         else Destroy(gameObject);
@@ -27,20 +30,11 @@ public class GameManager : MonoBehaviour
 
     private void Update ()
     {
-        // Input
         if (Input.GetButtonDown("Click"))
-        {
             CheckSelection(Input.mousePosition);
 
-            if (Selection != null)
-                Selection.Selected();
-        }
         else if (Input.GetKeyDown(KeyCode.Space))
-            StartTurn();
-
-        // If somthing was selected
-        if (Selection != null)
-            Debug.Log(Selection);
+            StartTurn(); 
     }
 
     // Selection Functions
@@ -49,10 +43,22 @@ public class GameManager : MonoBehaviour
         RaycastHit hit = ScreenRay(point);
         ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
 
-        if (Selection != null)
-            Selection.Action(hit.point);
+        if (hitObject != null)
+        {
+            Debug.Log("hitObject = " + hitObject);
+            if (Selection.Count == 0)
+                hitObject.Selected();
+            else if (hitObject != Selection.Peek())
+                hitObject.Selected();
+        }
 
-        Selection = hitObject;
+        if (Selection.Count > 0)
+        {
+            Debug.Log(Selection.Peek() + ": is selected");
+            Selection.Peek().Action(hit.point);
+        }
+        else if (Selection.Count == 0)
+            Debug.Log("NothingSelected");
     }
 
     public static RaycastHit ScreenRay(Vector3 point)
@@ -79,6 +85,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < units.Count; i++)
             StartCoroutine(units[i].InvokeCommands());
 
+        //Wait for all units to stop moving
         while (unitsMoving.Count > 0)
             yield return null;
     }

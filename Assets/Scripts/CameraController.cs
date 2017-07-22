@@ -23,8 +23,8 @@ public class CameraController : MonoBehaviour
                 else if (input.phase == TouchPhase.Moved)
                     rb.velocity -= new Vector3(Input.GetTouch(0).deltaPosition.x, 0, Input.GetTouch(0).deltaPosition.y) * Time.deltaTime;
             }
-            else // not working
-                transform.position += (GameManager.ScreenRay(Input.mousePosition).point - GameManager.ScreenRay(new Vector3(Screen.width, 0, Screen.height)).point / 2) * Time.deltaTime;
+            else
+                transform.position -= new Vector3(Input.GetAxis("Mouse X"), 0, Input.GetAxis("Mouse Y")) * 20 * Time.deltaTime;
         }
     }
 }

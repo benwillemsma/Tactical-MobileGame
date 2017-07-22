@@ -18,8 +18,6 @@ public class Command : MonoBehaviour, ISelectable
     protected bool selected = false;
     protected Vector3 pointOffset = new Vector3(0.5f, 0, 1f);
 
-    public GameObject gameobject { get { return gameObject; } }
-
     private void Start()
     {
         unit.orders.Add(this);
@@ -48,21 +46,26 @@ public class Command : MonoBehaviour, ISelectable
     //Interface Functions
     public virtual void Selected()
     {
+        Debug.Log(this + ": was selected");
+        GameManager.instance.Selection.Enqueue(this);
+        Debug.Log(GameManager.instance.Selection.Peek());
         gameObject.layer = 2;
-        GameManager.instance.Selection = this;
         selected = true;
     }
 
     public virtual void Action(Vector3 point)
     {
+        Debug.Log("Command: action");
         Deselected();
         selected = false;
+        unit.ToggleCommands();
         transform.position = point;
     }
 
     public virtual void Deselected()
     {
-        GameManager.instance.Selection = null;
+        Debug.Log(this + ": was deselected");
         gameObject.layer = 8;
+        GameManager.instance.Selection.Dequeue();
     }
 }

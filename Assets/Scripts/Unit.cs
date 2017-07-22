@@ -21,6 +21,8 @@ public class Unit : MonoBehaviour, ISelectable
 
     public bool hasFlag = false;
     bool turnFinished = false;
+
+    private GameObject Model;
     
     [SerializeField]
     GameObject bulletPrefab;
@@ -32,37 +34,43 @@ public class Unit : MonoBehaviour, ISelectable
     [Space(20)]
     public List<Command> orders;
 
-    public GameObject gameobject { get { return gameObject; } }
-
     private void Start ()
     {
         GameManager.units.Add(this);
         orders = new List<Command>();
 
         moveDistanceRemaining = maxMoveDistance;
+
+        Model = transform.GetChild(1).gameObject;
+        Model.GetComponent<Renderer>().material.color = GameManager.teamColors[(int)team];
     }
 
     //Interface Functinos
     public virtual void Selected()
     {
-        GameManager.instance.Selection = this;
+        Debug.Log(this + ": was selected");
+        GameManager.instance.Selection.Enqueue(this);
         ToggleCommands();
     }
-    
+
     public virtual void Action(Vector3 point)
     {
-        Deselected();
+        Debug.Log("Unit Action");
     }
 
     public virtual void Deselected()
     {
+        Debug.Log(this + ": was deselected");
         ToggleCommands();
-        GameManager.instance.Selection = null;
+        GameManager.instance.Selection.Dequeue();
     }
 
-    void ToggleCommands()
+    public void ToggleCommands()
     {
         transform.GetChild(0).gameObject.SetActive(!transform.GetChild(0).gameObject.activeInHierarchy);
+
+        for (int i = 0; i < orders.Count; i++)
+            orders[i].gameObject.SetActive(orders[i].gameObject.activeSelf);
     }
 
     //Actions

@@ -8,22 +8,18 @@ public class CommandUI : MonoBehaviour, ISelectable
 
     protected GameObject cursor;
     protected GameObject line;
-    public Command CommandPoint;
-
-    public GameObject gameobject { get { return gameObject; } }
+    public Command commandPrefab;
 
     //Interface Functinos
     public virtual void Selected()
     {
-        Command tempCmd = Instantiate(CommandPoint, unit.transform.position, unit.transform.rotation, GameObject.Find("Commands").transform).GetComponent<Command>();
+        unit.ToggleCommands();
+        Command tempCmd = Instantiate(commandPrefab, unit.transform.position, unit.transform.rotation, GameObject.Find("Commands").transform).GetComponent<Command>();
         tempCmd.unit = unit;
         tempCmd.Selected();
     }
 
-    public void Action(Vector3 direction) { }
+    public virtual void Action(Vector3 direction) { }
 
-    public virtual void Deselected()
-    {
-        GameManager.instance.Selection = unit;
-    }
+    public virtual void Deselected() { }
 }
