@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
     public static List<CapturePoint> captures = new List<CapturePoint>();                                               // All CapturePoints in the game
 
 
-    public Queue<ISelectable> Selection = new Queue<ISelectable>();                                                     // Current Selection
+    public ISelectable Selection;                                                                                       // Current Selection
 
     private void Start ()
     {
@@ -45,20 +45,16 @@ public class GameManager : MonoBehaviour
 
         if (hitObject != null)
         {
-            Debug.Log("hitObject = " + hitObject);
-            if (Selection.Count == 0)
+            if (Selection != null)
+            {
+                Selection.Action(hit.point);
                 hitObject.Selected();
-            else if (hitObject != Selection.Peek())
+            }
+            else if (hitObject != Selection)
                 hitObject.Selected();
         }
-
-        if (Selection.Count > 0)
-        {
-            Debug.Log(Selection.Peek() + ": is selected");
-            Selection.Peek().Action(hit.point);
-        }
-        else if (Selection.Count == 0)
-            Debug.Log("NothingSelected");
+        else if (Selection != null)
+            Selection.Action(hit.point);
     }
 
     public static RaycastHit ScreenRay(Vector3 point)

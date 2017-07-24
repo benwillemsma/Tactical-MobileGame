@@ -13,7 +13,6 @@ public class CommandUI : MonoBehaviour, ISelectable
     //Interface Functinos
     public virtual void Selected()
     {
-        unit.ToggleCommands();
         Command tempCmd = Instantiate(commandPrefab, unit.transform.position, unit.transform.rotation, GameObject.Find("Commands").transform).GetComponent<Command>();
         tempCmd.unit = unit;
         tempCmd.Selected();

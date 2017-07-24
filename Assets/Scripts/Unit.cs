@@ -17,13 +17,11 @@ public class Unit : MonoBehaviour, ISelectable
     public float speed;
 
     public float maxMoveDistance;
-    private float moveDistanceRemaining;
 
     public bool hasFlag = false;
-    bool turnFinished = false;
 
     private GameObject Model;
-    
+
     [SerializeField]
     GameObject bulletPrefab;
     [SerializeField]
@@ -39,8 +37,6 @@ public class Unit : MonoBehaviour, ISelectable
         GameManager.units.Add(this);
         orders = new List<Command>();
 
-        moveDistanceRemaining = maxMoveDistance;
-
         Model = transform.GetChild(1).gameObject;
         Model.GetComponent<Renderer>().material.color = GameManager.teamColors[(int)team];
     }
@@ -48,21 +44,19 @@ public class Unit : MonoBehaviour, ISelectable
     //Interface Functinos
     public virtual void Selected()
     {
-        Debug.Log(this + ": was selected");
-        GameManager.instance.Selection.Enqueue(this);
+        GameManager.instance.Selection = this;
         ToggleCommands();
     }
 
     public virtual void Action(Vector3 point)
     {
-        Debug.Log("Unit Action");
+        Deselected();
     }
 
     public virtual void Deselected()
     {
-        Debug.Log(this + ": was deselected");
         ToggleCommands();
-        GameManager.instance.Selection.Dequeue();
+        GameManager.instance.Selection = null;
     }
 
     public void ToggleCommands()
@@ -78,7 +72,7 @@ public class Unit : MonoBehaviour, ISelectable
     {
         GameManager.unitsMoving.Add(this);
 
-        while (moveDistanceRemaining >= 0 && orders.Count > 0)
+        while (orders.Count > 0)
         {
             switch (orders[0].type)
             {
@@ -95,12 +89,8 @@ public class Unit : MonoBehaviour, ISelectable
                     Debug.Log("Command No Implimented:" + orders[0].type);
                     break;
             }
-            if (!turnFinished)
-                orders[0].Remove();
+            orders[0].Remove();
         }
-        turnFinished = false;
-        moveDistanceRemaining = maxMoveDistance;
-
         GameManager.unitsMoving.Remove(this);
     }
 
@@ -112,14 +102,6 @@ public class Unit : MonoBehaviour, ISelectable
         while ((transform.position - destination).magnitude > 0.1f)
         {
             transform.position = Vector3.MoveTowards(transform.position, destination, Time.deltaTime * speed);
-
-            moveDistanceRemaining = maxMoveDistance - (transform.position - startPos).magnitude;
-            if (moveDistanceRemaining <= 0)
-            {
-                turnFinished = true;
-                yield break;
-            }
-
             yield return null;
         }
     }

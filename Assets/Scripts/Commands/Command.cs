@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
-using System.Collections;
+using System.Collections.Generic;
 
 public enum CommandType
 {
@@ -15,57 +15,73 @@ public class Command : MonoBehaviour, ISelectable
 
     public Unit unit;
 
-    protected bool selected = false;
-    protected Vector3 pointOffset = new Vector3(0.5f, 0, 1f);
+    public Transform[] visualMarkers;
 
-    private void Start()
+    private List<Transform> lineSegments = new List<Transform>();
+    protected static Vector3 groundOffset = new Vector3(0, 0.2f, 0);
+
+    protected bool selected = false;
+    protected Vector3 touchOffset = new Vector3(0.5f, 0, 1f);
+
+    protected virtual void Start()
     {
         unit.orders.Add(this);
     }
-
-    private void Update()
+    protected virtual void Update()
     {
         if (selected)
             if (Input.touchCount > 0)
             {
                 if (Input.GetTouch(0).phase == TouchPhase.Moved)
-                    transform.position = GameManager.ScreenRay(Input.GetTouch(0).position).point + pointOffset;
+                    transform.position = GameManager.ScreenRay(Input.GetTouch(0).position).point + touchOffset;
                 if (Input.GetTouch(0).phase == TouchPhase.Ended)
-                    Action(GameManager.ScreenRay(Input.GetTouch(0).position).point + pointOffset);
+                    Action(GameManager.ScreenRay(Input.GetTouch(0).position).point + touchOffset);
             }
             else
                 transform.position = GameManager.ScreenRay(Input.mousePosition).point;
     }
 
-    public void Remove()
+    public virtual void Remove()
     {
         unit.orders.Remove(this);
         Destroy(gameObject);
     }
 
-    //Interface Functions
+    // Interface Functions
     public virtual void Selected()
     {
-        Debug.Log(this + ": was selected");
-        GameManager.instance.Selection.Enqueue(this);
-        Debug.Log(GameManager.instance.Selection.Peek());
+        GameManager.instance.Selection = this;
         gameObject.layer = 2;
         selected = true;
     }
-
     public virtual void Action(Vector3 point)
     {
-        Debug.Log("Command: action");
         Deselected();
         selected = false;
         unit.ToggleCommands();
         transform.position = point;
     }
-
     public virtual void Deselected()
     {
-        Debug.Log(this + ": was deselected");
         gameObject.layer = 8;
-        GameManager.instance.Selection.Dequeue();
+        GameManager.instance.Selection = unit;
+    }
+
+    // Visual Funciton;
+    public void LineFromTo(Vector3 from, Vector3 to, int tileAmount, Transform lineSprite)
+    {
+        for (int i = 0; i < lineSegments.Count; i++)
+            lineSegments[i].gameObject.SetActive(i < tileAmount ? true : false);
+
+        while (lineSegments.Count < tileAmount)
+            lineSegments.Add(Instantiate(lineSprite, gameObject.transform));
+
+        for (int i = 0; i < tileAmount; i++)
+        {
+            if (!lineSegments[i].gameObject.activeSelf)
+                break;
+            lineSegments[i].position = from + ((to - from).normalized * (i + 0.5f));
+            lineSegments[i].rotation = Quaternion.LookRotation(Vector3.up, (to - from));
+        }
     }
 }
