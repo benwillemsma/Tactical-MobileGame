@@ -2,8 +2,16 @@
 
 public class Billboard : MonoBehaviour
 {
-	void Update ()
+    public Camera targetCamera;
+
+    private void Start()
     {
-        transform.eulerAngles = Vector3.ProjectOnPlane(new Vector3(transform.eulerAngles.x, -180, 0), Camera.main.transform.forward);
+        if(!targetCamera)
+            targetCamera = Camera.main;
+    }
+
+    private void Update ()
+    {
+        transform.eulerAngles = Vector3.ProjectOnPlane(new Vector3(transform.eulerAngles.x, -180, 0), targetCamera.transform.forward);
 	}
 }

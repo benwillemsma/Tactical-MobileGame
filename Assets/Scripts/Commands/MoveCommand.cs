@@ -47,8 +47,6 @@ public class MoveCommand : Command
 
                 remainingMove = moves[i - 1].remainingMove - direction.magnitude;
                 visualMarkers[0].localScale = Vector3.one * availableMove;
-                if (selected)
-                    Debug.Log((unit.maxMoveDistance - availableMove) / 2 / (unit.maxMoveDistance / 2));
                 transform.position = start - direction;
             }
             else
