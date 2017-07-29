@@ -5,20 +5,10 @@ using UnityEngine;
 public class CapturePoint : MonoBehaviour
 {
     [SerializeField]
-    protected int captureProgress = 3;
+    protected int captureProgress = 2;
 
     [SerializeField]
     protected Team teamAssosiation;
-    protected Team team
-    {
-        get {return teamAssosiation; }
-        set
-        {
-            teamAssosiation = value;
-            if (teamAssosiation == value)
-                changeTeams(value);
-        }
-    }
 
     private void Start()
     {
@@ -32,23 +22,27 @@ public class CapturePoint : MonoBehaviour
         for (int i = 0; i < capturingUnits.Length; i++)
         {
             if (capturingUnits[i].CompareTag("Unit"))
-                captureProgress -= capturingUnits[i].GetComponent<Unit>().team == Team.Team_1 ? 1 : -1;
+                captureProgress -= capturingUnits[i].GetComponent<Unit>().playerTeam == Team.Team_1 ? 1 : -1;
         }
 
-        captureProgress = Mathf.Clamp(captureProgress, 0, 6);
+        captureProgress = Mathf.Clamp(captureProgress, 0, 4);
 
         if (captureProgress <= 0)
-            team = Team.Team_1;
+            teamAssosiation = Team.Team_1;
 
-        else if (captureProgress > 0 && captureProgress < 6)
-            team = Team.Neutral;
+        else if (captureProgress > 0 && captureProgress < 4)
+            teamAssosiation = Team.Neutral;
 
-        else if (captureProgress >= 6)
-            team = Team.Team_2;
+        else if (captureProgress >= 4)
+            teamAssosiation = Team.Team_2;
+
+        changeTeams(teamAssosiation);
+        if (teamAssosiation != Team.Neutral)
+            GameManager.teams[(int)teamAssosiation].score++;
     }
 
     void changeTeams(Team teamNumber)
     {
-        //change graphics representation
+        GetComponent<Renderer>().material.color = GameManager.teams[(int)teamNumber].teamColor;
     }
 }

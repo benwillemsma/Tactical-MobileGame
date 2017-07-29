@@ -2,24 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Team
+public class Unit : MonoBehaviour, ISelectable,IDamageable
 {
-    Neutral,
-    Team_1,
-    Team_2,
-    Team_3,
-    Team_4
-}
-
-public class Unit : MonoBehaviour, ISelectable
-{
-    public Team team;
+    public Team playerTeam;
     public float speed;
-
+    public float health;
     public float maxMoveDistance;
 
     public bool hasFlag = false;
 
+    private PlayerTeam team;
     private GameObject Model;
 
     [SerializeField]
@@ -34,14 +26,15 @@ public class Unit : MonoBehaviour, ISelectable
 
     private void Start ()
     {
-        GameManager.units.Add(this);
+        team = GameManager.teams[(int)playerTeam];
+        team.units.Add(this);
         orders = new List<Command>();
 
         Model = transform.GetChild(1).gameObject;
-        Model.GetComponent<Renderer>().material.color = GameManager.teamColors[(int)team];
+        Model.GetComponent<Renderer>().material.color = team.teamColor;
     }
 
-    //Interface Functinos
+    // ISelectable
     public virtual void Selected()
     {
         GameManager.instance.Selection = this;
@@ -65,6 +58,22 @@ public class Unit : MonoBehaviour, ISelectable
 
         for (int i = 0; i < orders.Count; i++)
             orders[i].gameObject.SetActive(orders[i].gameObject.activeSelf);
+    }
+
+    //IDamageable
+    public virtual void TakeDamage(float damage)
+    {
+        health -= damage;
+
+        if (health <= 0)
+            Die();
+    }
+    public virtual void Die()
+    {
+        StopAllCoroutines();
+        GameManager.unitsMoving.Remove(this);
+        team.units.Remove(this);
+        Destroy(gameObject);
     }
 
     //Actions
@@ -109,18 +118,14 @@ public class Unit : MonoBehaviour, ISelectable
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        GameObject bullet = Instantiate(bulletPrefab, bulletSpawn.position, bulletSpawn.rotation);
-        bullet.GetComponent<Rigidbody>().AddForce(direction * 200);
-        Destroy(bullet, 4);
+        Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(direction));
         yield return new WaitForSeconds(0.2f);
     }
     public IEnumerator Grenade(Vector3 direction)
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        GameObject grenade = Instantiate(grenadePrefab, bulletSpawn.position, bulletSpawn.rotation);
-        grenade.GetComponent<Rigidbody>().AddForce(direction * 50 + Vector3.up * 200);
-        Destroy(grenade, 4);
+        Instantiate(grenadePrefab, bulletSpawn.position, Quaternion.LookRotation(direction + Vector3.up * 4));
         yield return new WaitForSeconds(0.2f);
     }
 }

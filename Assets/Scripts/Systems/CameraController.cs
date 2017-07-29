@@ -4,13 +4,6 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    Rigidbody rb;
-
-    private void Start()
-    {
-        rb = GetComponent<Rigidbody>();
-    }
-
     void Update ()
     {
         if (Input.GetButton("Click") && GameManager.instance.Selection == null)
