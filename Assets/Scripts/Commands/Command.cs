@@ -50,7 +50,7 @@ public class Command : MonoBehaviour, ISelectable
     // Interface Functions
     public virtual void Selected()
     {
-        GameManager.instance.Selection = this;
+        GameManager.Selection = this;
         gameObject.layer = 2;
         selected = true;
     }
@@ -64,7 +64,7 @@ public class Command : MonoBehaviour, ISelectable
     public virtual void Deselected()
     {
         gameObject.layer = 8;
-        GameManager.instance.Selection = unit;
+        GameManager.Selection = unit;
     }
 
     // Visual Funciton;

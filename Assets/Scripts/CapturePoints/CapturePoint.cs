@@ -5,7 +5,7 @@ using UnityEngine;
 public class CapturePoint : MonoBehaviour
 {
     [SerializeField]
-    protected int captureProgress = 2;
+    protected int captureProgress = 0;
 
     [SerializeField]
     protected Team teamAssosiation;
@@ -17,32 +17,39 @@ public class CapturePoint : MonoBehaviour
 
     public virtual void CalculateCapture()
     {
-        Collider[] capturingUnits = Physics.OverlapSphere(transform.position, 1.25f, LayerMask.GetMask("Selectable"));
+        Collider[] capturingUnits = Physics.OverlapSphere(transform.position, 1.25f, LayerMask.GetMask("Unit"));
+        Team checkTeam = Team.Neutral;
 
-        for (int i = 0; i < capturingUnits.Length; i++)
+        if (capturingUnits.Length > 0)
         {
-            if (capturingUnits[i].CompareTag("Unit"))
-                captureProgress -= capturingUnits[i].GetComponent<Unit>().playerTeam == Team.Team_1 ? 1 : -1;
+            checkTeam = capturingUnits[0].gameObject.GetComponent<Unit>().Team;
+
+            for (int i = 1; i < capturingUnits.Length; i++)
+            {
+                if (checkTeam != capturingUnits[i].gameObject.GetComponent<Unit>().Team)
+                    return;
+            }
+
+            if (checkTeam != teamAssosiation)
+            {
+                captureProgress += capturingUnits.Length;
+                if (captureProgress >= 3)
+                {
+                    captureProgress = 0;
+                    teamAssosiation = checkTeam;
+                    changeTeams();
+                }
+            }
         }
-
-        captureProgress = Mathf.Clamp(captureProgress, 0, 4);
-
-        if (captureProgress <= 0)
-            teamAssosiation = Team.Team_1;
-
-        else if (captureProgress > 0 && captureProgress < 4)
-            teamAssosiation = Team.Neutral;
-
-        else if (captureProgress >= 4)
-            teamAssosiation = Team.Team_2;
-
-        changeTeams(teamAssosiation);
         if (teamAssosiation != Team.Neutral)
             GameManager.teams[(int)teamAssosiation].score++;
     }
 
-    void changeTeams(Team teamNumber)
+    void changeTeams()
     {
-        GetComponent<Renderer>().material.color = GameManager.teams[(int)teamNumber].teamColor;
+        if (teamAssosiation != Team.Neutral)
+            GetComponent<Renderer>().material.color = GameManager.teams[(int)teamAssosiation].teamColor;
+        else
+            GetComponent<Renderer>().material.color = Color.yellow;
     }
 }

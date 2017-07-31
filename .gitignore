@@ -28,3 +28,40 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+*.exe
+*.mp4
+Tactical Shooter_Data/Managed/Assembly-CSharp.dll
+Tactical Shooter_Data/Managed/Mono.Security.dll
+Tactical Shooter_Data/Managed/mscorlib.dll
+Tactical Shooter_Data/Managed/Photon3Unity3D.dll
+Tactical Shooter_Data/Managed/System.Core.dll
+Tactical Shooter_Data/Managed/System.dll
+Tactical Shooter_Data/Managed/UnityEngine.dll
+Tactical Shooter_Data/Managed/UnityEngine.dll.mdb
+Tactical Shooter_Data/Managed/UnityEngine.Networking.dll
+Tactical Shooter_Data/Managed/UnityEngine.UI.dll
+Tactical Shooter_Data/Mono/etc/mono/1.0/DefaultWsdlHelpGenerator.aspx
+Tactical Shooter_Data/Mono/etc/mono/1.0/machine.config
+Tactical Shooter_Data/Mono/etc/mono/2.0/Browsers/Compat.browser
+Tactical Shooter_Data/Mono/etc/mono/2.0/DefaultWsdlHelpGenerator.aspx
+Tactical Shooter_Data/Mono/etc/mono/2.0/machine.config
+Tactical Shooter_Data/Mono/etc/mono/2.0/settings.map
+Tactical Shooter_Data/Mono/etc/mono/2.0/web.config
+Tactical Shooter_Data/Mono/etc/mono/mconfig/config.xml
+Tactical Shooter_Data/Mono/etc/mono/browscap.ini
+Tactical Shooter_Data/Mono/etc/mono/config
+Tactical Shooter_Data/Mono/mono.dll
+Tactical Shooter_Data/Mono/MonoPosixHelper.dll
+Tactical Shooter_Data/Resources/unity default resources
+Tactical Shooter_Data/Resources/unity_builtin_extra
+Tactical Shooter_Data/app.info
+Tactical Shooter_Data/globalgamemanagers
+Tactical Shooter_Data/globalgamemanagers.assets
+Tactical Shooter_Data/level0
+Tactical Shooter_Data/level0.resS
+Tactical Shooter_Data/output_log.txt
+Tactical Shooter_Data/resources.assets
+Tactical Shooter_Data/resources.assets.resS
+Tactical Shooter_Data/resources.resource
+Tactical Shooter_Data/sharedassets0.assets
+Tactical Shooter_Data/sharedassets0.assets.resS

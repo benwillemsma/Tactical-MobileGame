@@ -1,31 +1,31 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.UI;
 
 public enum Team
 {
-    Neutral,
     Team_1,
     Team_2,
     Team_3,
-    Team_4
+    Team_4,
+    Neutral
 }
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
-    public static GameManager instance;
-    private bool RecieveInput = true;
-    public ISelectable Selection;
+    public static ISelectable Selection;
 
     public static List<PlayerTeam> teams = new List<PlayerTeam>();
     public static List<Unit> unitsMoving = new List<Unit>();
     public static List<CapturePoint> captures = new List<CapturePoint>();
 
     // Game Specific Variables
-    private PlayerTeam winner = null;
-    private int teamAmount = 2;
-    private int winningScore = 10;
+    public static PlayerTeam winner = null;
+    public static int winningScore = 10;
+    private static int teamAmount;
+    private bool RecieveInput = true;
 
     // GUI
     public Text[] ScoreText;
@@ -33,71 +33,46 @@ public class GameManager : MonoBehaviour
 
     private void Start ()
     {
-        if (!instance)
-            instance = this; 
-        else Destroy(gameObject);
-
         Cursor.lockState = CursorLockMode.Confined;
         Screen.orientation = ScreenOrientation.LandscapeLeft;
-        
-        // Initalize Teams
-        teamAmount = 2;
-        teams.Add(new PlayerTeam("Nutral", Color.yellow));
-
-        for (int i = 0; i < teamAmount; i++)
-            teams.Add(new PlayerTeam("Team " + (i + 1), Random.ColorHSV()));
-        
-        for (int i = teamAmount; i < ScoreText.Length; i++)
-            ScoreText[i].enabled = false;
     }
     private void Update ()
     {
+        teamAmount = teams.Count;
         if (RecieveInput)
         {
             if (Input.GetButtonDown("Click"))
                 CheckSelection(Input.mousePosition);
 
-            else if (Input.GetKeyDown(KeyCode.Space))
-                StartTurn();
-
             for (int i = 0; i < teamAmount; i++)
-                ScoreText[i].text = " Team " + (i + 1) + ": " + teams[i].score;
+            {
+                ScoreText[i].enabled = true;
+                ScoreText[i].text = teams[i].teamName + ": " + teams[i].score;
+            }
+            for (int i = teamAmount; i < ScoreText.Length; i++)
+                ScoreText[i].enabled = false;
         }
 
-        CheckTeamStates();
-
-        if (winner != null)
-            EndGame();
+        if (teamAmount > 0)
+            CheckReadyStates();
     }
-    private void CheckTeamStates()
+    private void CheckReadyStates()
     {
-        for (int i = 0; i < teamAmount + 1; i++)
+        for (int i = 0; i < teams.Count; i++)
         {
-            if(i != 0 && teams[i].units.Count <= 0)
-            {
-                teams.Remove(teams[i]);
-                // Check if only one Team remains (and nutral).
-                if (teams.Count == 2)
-                {
-                    winner = teams[0];
-                    return;
-                }
-            }
-
-            // Check if Team has Won.
-            if(teams[i].score >= winningScore)
-            {
-                winner = teams[i];
-                return;
-            }
-
-            // Check it teams are ready.
             if (!teams[i].ready)
                 return;
         }
-
-        // If game is not over and ALL Teams ready...
         StartTurn();
+    }
+
+    private void CheckForWinner()
+    {
+        if (teams.Count == 1)
+            winner = teams[0];
+
+        if (winner != null)
+            EndGame();
     }
 
     // Selection Functions
@@ -123,7 +98,7 @@ public class GameManager : MonoBehaviour
     {
         RaycastHit hit;
         Ray ray = Camera.main.ScreenPointToRay(point);
-        Physics.Raycast(ray, out hit, 15, LayerMask.GetMask("Selectable"));
+        Physics.Raycast(ray, out hit, 15, LayerMask.GetMask("Selectable","Unit"));
         return hit;
     }
 
@@ -152,11 +127,8 @@ public class GameManager : MonoBehaviour
     }
     private IEnumerator WaitForUnits()
     {
-        for (int i = 0; i < teamAmount + 1; i++)
-        {
-            for (int u = 0; u < teams[i].units.Count; u++)
-                StartCoroutine(teams[i].units[u].InvokeCommands());
-        }
+        for (int i = 0; i < teamAmount; i++)
+            teams[i].InvokeCommands();
 
         //Wait for all units to stop moving
         while (unitsMoving.Count > 0)
@@ -169,5 +141,7 @@ public class GameManager : MonoBehaviour
 
         TurnButton.interactable = true;
         RecieveInput = true;
+
+        CheckForWinner();
     }
 }

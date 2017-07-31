@@ -11,7 +11,7 @@ public class FlagPoint : CapturePoint
             if (capturingUnits[i].CompareTag("Unit"))
             {
                 Unit unit = capturingUnits[i].GetComponent<Unit>();
-                if (unit.playerTeam != teamAssosiation)
+                if (unit.Team != teamAssosiation)
                 {
                     unit.hasFlag = true;
                     Transform temp = capturingUnits[i].transform;

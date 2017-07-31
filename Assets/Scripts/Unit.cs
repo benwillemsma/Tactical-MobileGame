@@ -1,17 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class Unit : MonoBehaviour, ISelectable,IDamageable
+public class Unit : NetworkBehaviour, ISelectable,IDamageable
 {
-    public Team playerTeam;
     public float speed;
     public float health;
     public float maxMoveDistance;
 
     public bool hasFlag = false;
 
-    private PlayerTeam team;
+    public Team Team { get { return team.team; } }
+    
+    public PlayerTeam team;
     private GameObject Model;
 
     [SerializeField]
@@ -26,9 +28,12 @@ public class Unit : MonoBehaviour, ISelectable,IDamageable
 
     private void Start ()
     {
-        team = GameManager.teams[(int)playerTeam];
-        team.units.Add(this);
         orders = new List<Command>();
+
+        team = PlayerTeam.LocalTeam;
+        team.AddUnits(this);
+
+        transform.parent = team.transform;
 
         Model = transform.GetChild(1).gameObject;
         Model.GetComponent<Renderer>().material.color = team.teamColor;
@@ -37,7 +42,7 @@ public class Unit : MonoBehaviour, ISelectable,IDamageable
     // ISelectable
     public virtual void Selected()
     {
-        GameManager.instance.Selection = this;
+        GameManager.Selection = this;
         ToggleCommands();
     }
 
@@ -45,11 +50,10 @@ public class Unit : MonoBehaviour, ISelectable,IDamageable
     {
         Deselected();
     }
-
     public virtual void Deselected()
     {
         ToggleCommands();
-        GameManager.instance.Selection = null;
+        GameManager.Selection = null;
     }
 
     public void ToggleCommands()
@@ -70,9 +74,10 @@ public class Unit : MonoBehaviour, ISelectable,IDamageable
     }
     public virtual void Die()
     {
+        Debug.Log("dead");
         StopAllCoroutines();
         GameManager.unitsMoving.Remove(this);
-        team.units.Remove(this);
+        team.RemoveUnits(this);
         Destroy(gameObject);
     }
 
@@ -98,7 +103,8 @@ public class Unit : MonoBehaviour, ISelectable,IDamageable
                     Debug.Log("Command No Implimented:" + orders[0].type);
                     break;
             }
-            orders[0].Remove();
+            if (orders.Count > 0)
+                orders[0].Remove();
         }
         GameManager.unitsMoving.Remove(this);
     }
