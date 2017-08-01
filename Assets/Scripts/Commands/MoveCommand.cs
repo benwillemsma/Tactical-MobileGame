@@ -20,6 +20,11 @@ public class MoveCommand : Command
 
     protected override void Update ()
     {
+        if (unit == null)
+        {
+            Destroy(gameObject);
+            return;
+        }
         base.Update();
 
         visualMarkers[0].gameObject.SetActive(selected ? true : false);

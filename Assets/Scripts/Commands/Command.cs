@@ -25,10 +25,16 @@ public class Command : MonoBehaviour, ISelectable
 
     protected virtual void Start()
     {
+        gameObject.layer = 2;
         unit.orders.Add(this);
     }
     protected virtual void Update()
     {
+        if (unit == null)
+        {
+            Destroy(gameObject);
+            return;
+        }
         if (selected)
             if (Input.touchCount > 0)
             {
@@ -50,8 +56,8 @@ public class Command : MonoBehaviour, ISelectable
     // Interface Functions
     public virtual void Selected()
     {
-        GameManager.Selection = this;
         gameObject.layer = 2;
+        unit.team.Selection = this;
         selected = true;
     }
     public virtual void Action(Vector3 point)
@@ -63,8 +69,8 @@ public class Command : MonoBehaviour, ISelectable
     }
     public virtual void Deselected()
     {
-        gameObject.layer = 8;
-        GameManager.Selection = unit;
+        gameObject.layer = unit.gameObject.layer;
+        unit.team.Selection = unit;
     }
 
     // Visual Funciton;

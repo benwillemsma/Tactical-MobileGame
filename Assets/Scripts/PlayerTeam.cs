@@ -1,73 +1,120 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Networking;
 
 public class PlayerTeam : NetworkBehaviour
 {
     public static PlayerTeam LocalTeam;
+
+    public Button TurnButton;
     public GameObject UnitPrefab;
 
+    private List<Unit> units = new List<Unit>();
+    public ISelectable Selection;
+
+    [SyncVar, Space(10)]
+    public Team team;
     [SyncVar]
     public string teamName;
     [SyncVar]
     public Color teamColor;
-    
-    public Team team;
+    [SyncVar]
+    public int teamLayer;
+
+    [SyncVar, Space(10)]
     public float score;
-    public bool ready;
 
-    private List<Unit> units = new List<Unit>();
+    [HideInInspector]
+    public bool canInput = true;
 
-    [Command]
-    void CmdInitPlayer(GameObject team)
-    {
-        Debug.Log("Server");
-
-        name = "Team: " + GameManager.teams.Count;
-        teamName = name;
-        teamColor = Random.ColorHSV();
-
-        GameObject unit = Instantiate(UnitPrefab, transform.position, transform.rotation);
-        NetworkServer.SpawnWithClientAuthority(unit, team.gameObject);
-    }
-
+    #region Player initialization
     private void Start()
     {
-        Debug.Log("Start");
-
         LocalTeam = this;
 
-        team = (Team)GameManager.teams.Count;
-        GameManager.teams.Add(this);
-
         if (isLocalPlayer)
-            CmdInitPlayer(gameObject);
+        {
+            TurnButton = GameObject.Find("TurnButton").GetComponent<Button>();
+            TurnButton.onClick.AddListener(delegate { ToggleReady(); });
+            CmdInitPlayer();
+        }
     }
+    [Command]
+    private void CmdInitPlayer()
+    {
+        team = (Team)GameManager.Instance.s_teams.Count;
+        teamName = "Team" + (GameManager.Instance.s_teams.Count + 1);
+        teamColor = Random.ColorHSV();
+        teamLayer = 9 + GameManager.Instance.s_teams.Count;
+
+        RpcInitPlayer(team, teamName, teamColor, teamLayer);
+
+        GameManager.Instance.AddPlayer(this);
+        GameObject unit = Instantiate(UnitPrefab, transform.position, transform.rotation);
+        NetworkServer.SpawnWithClientAuthority(unit, gameObject);
+    }
+    [ClientRpc]
+    private void RpcInitPlayer(Team team,string teamName,Color teamColor,int teamLayer)
+    {
+        this.teamLayer = teamLayer;
+        this.team = team;
+        this.teamName = teamName;
+        this.teamColor = teamColor;
+    }
+    #endregion
+    
     private void OnDestroy()
     {
-        GameManager.teams.Remove(this);
+        GameManager.Instance.RemovePlayer(this);
     }
-
     private void Update()
     {
-        if (!isLocalPlayer)
-            return;
+        if ( gameObject.layer != teamLayer)
+            gameObject.layer = teamLayer;
 
-        if (Input.GetKeyDown(KeyCode.Space))
-            ready = true;
+        if (isLocalPlayer && canInput)
+        {
+            if (Input.GetButtonDown("Click"))
+                CheckSelection(Input.mousePosition);
 
+            if (Input.GetKeyDown(KeyCode.Space))
+                ToggleReady();
+        }
         if (units.Count <= 0)
-            GameManager.teams.Remove(this);
+            Destroy(this);
 
-        else if (score >= GameManager.winningScore)
-            GameManager.winner = this;
+        else if (score >= GameManager.Instance.s_winningScore)
+            GameManager.Instance.s_winner = this;
+        
+    }
+    
+    private void CheckSelection(Vector3 point)
+    {
+        RaycastHit hit = GameManager.ScreenRay(point, gameObject.layer);
+        ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
+
+        if (hitObject != null)
+        {
+            if (Selection != null)
+            {
+                Selection.Action(hit.point);
+                hitObject.Selected();
+            }
+            else if (hitObject != Selection)
+                hitObject.Selected();
+        }
+        else if (Selection != null)
+            Selection.Action(hit.point);
     }
 
-    public void InvokeCommands()
+    [ClientRpc]
+    public void RpcInvokeCommands()
     {
-        for (int i = 0; i < units.Count; i++)
-            StartCoroutine(units[i].InvokeCommands());
+        if (isLocalPlayer)
+            for (int i = 0; i < units.Count; i++)
+                StartCoroutine(units[i].InvokeCommands());
     }
 
     public void AddUnits(params Unit[] units)
@@ -78,5 +125,25 @@ public class PlayerTeam : NetworkBehaviour
     {
         for (int i = 0; i < units.Length; i++)
             this.units.Remove(units[i]);
+    }
+
+    public void ToggleReady()
+    {
+        canInput = false;
+        TurnButton.gameObject.SetActive(false);
+        CmdIsReady();
+    }
+    [Command]
+    public void CmdIsReady()
+    {
+        GameManager.Instance.s_playerReady[(int)team] = true;
+        GameManager.Instance.CheckReadyStates();
+    }
+    [ClientRpc]
+    public void RpcToggleReady()
+    {
+        canInput = true;
+        if (isLocalPlayer)
+            TurnButton.gameObject.SetActive(true);
     }
 }

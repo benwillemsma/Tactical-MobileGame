@@ -1,22 +1,30 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class CapturePoint : MonoBehaviour
+public class CapturePoint : NetworkBehaviour
 {
-    [SerializeField]
+    [SyncVar,SerializeField]
     protected int captureProgress = 0;
 
-    [SerializeField]
+    [SyncVar, SerializeField]
     protected Team teamAssosiation;
 
     private void Start()
     {
-        GameManager.captures.Add(this);
+        if (isServer)
+        {
+            GameManager.Instance.s_captures.Add(this);
+            NetworkServer.Spawn(gameObject);
+        }
     }
 
     public virtual void CalculateCapture()
     {
+        if (!isServer)
+            return;
+
         Collider[] capturingUnits = Physics.OverlapSphere(transform.position, 1.25f, LayerMask.GetMask("Unit"));
         Team checkTeam = Team.Neutral;
 
@@ -42,13 +50,13 @@ public class CapturePoint : MonoBehaviour
             }
         }
         if (teamAssosiation != Team.Neutral)
-            GameManager.teams[(int)teamAssosiation].score++;
+            GameManager.Instance.s_teams[(int)teamAssosiation].score++;
     }
 
     void changeTeams()
     {
         if (teamAssosiation != Team.Neutral)
-            GetComponent<Renderer>().material.color = GameManager.teams[(int)teamAssosiation].teamColor;
+            GetComponent<Renderer>().material.color = GameManager.Instance.s_teams[(int)teamAssosiation].teamColor;
         else
             GetComponent<Renderer>().material.color = Color.yellow;
     }

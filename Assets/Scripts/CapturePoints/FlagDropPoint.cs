@@ -6,6 +6,9 @@ public class FlagDropPoint : CapturePoint
 {
     public override void CalculateCapture()
     {
+        if (!isServer)
+            return;
+
         Collider[] capturingUnits = Physics.OverlapSphere(transform.position, 1.25f, LayerMask.GetMask("Selectable"));
 
         for (int i = 0; i < capturingUnits.Length; i++)
@@ -15,9 +18,9 @@ public class FlagDropPoint : CapturePoint
                 Unit unit = capturingUnits[i].GetComponent<Unit>();
                 if (unit.Team == teamAssosiation && unit.hasFlag)
                 {
-                    GameManager.teams[i].score++;
+                    GameManager.Instance.s_teams[i].score++;
                     FlagPoint flag = unit.GetComponentInChildren<FlagPoint>();
-                    GameManager.captures.Remove(flag);
+                    GameManager.Instance.s_captures.Remove(flag);
                     Destroy(flag.gameObject);
                     unit.hasFlag = false;
                 }

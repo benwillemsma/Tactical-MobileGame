@@ -17,6 +17,8 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     private GameObject Model;
 
     [SerializeField]
+    GameObject commandUI;
+    [SerializeField]
     GameObject bulletPrefab;
     [SerializeField]
     GameObject grenadePrefab;
@@ -33,6 +35,10 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         team = PlayerTeam.LocalTeam;
         team.AddUnits(this);
 
+        gameObject.layer = team.teamLayer;
+        for (int i = 0; i < commandUI.transform.childCount; i++)
+            commandUI.transform.GetChild(i).gameObject.layer = team.teamLayer;
+
         transform.parent = team.transform;
 
         Model = transform.GetChild(1).gameObject;
@@ -42,7 +48,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     // ISelectable
     public virtual void Selected()
     {
-        GameManager.Selection = this;
+        team.Selection = this;
         ToggleCommands();
     }
 
@@ -53,12 +59,12 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     public virtual void Deselected()
     {
         ToggleCommands();
-        GameManager.Selection = null;
+        team.Selection = null;
     }
 
     public void ToggleCommands()
     {
-        transform.GetChild(0).gameObject.SetActive(!transform.GetChild(0).gameObject.activeInHierarchy);
+        commandUI.SetActive(!transform.GetChild(0).gameObject.activeInHierarchy);
 
         for (int i = 0; i < orders.Count; i++)
             orders[i].gameObject.SetActive(orders[i].gameObject.activeSelf);
@@ -74,39 +80,58 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     }
     public virtual void Die()
     {
-        Debug.Log("dead");
+        if (isServer)
+            CmdRemoveFromServer();
+
         StopAllCoroutines();
-        GameManager.unitsMoving.Remove(this);
         team.RemoveUnits(this);
         Destroy(gameObject);
+    }
+    public void OnDestroy()
+    {
+        team.RemoveUnits(this);
     }
 
     //Actions
     public virtual IEnumerator InvokeCommands()
     {
-        GameManager.unitsMoving.Add(this);
-
-        while (orders.Count > 0)
+        if (orders.Count > 0)
         {
-            switch (orders[0].type)
+            CmdAddToServer();
+
+            while (orders.Count > 0)
             {
-                case CommandType.Move:
-                    yield return Move(orders[0].transform.position);
-                    break;
-                case CommandType.Shoot:
-                    yield return Shoot(orders[0].transform.position - transform.position);
-                    break;
-                case CommandType.Grenade:
-                    yield return Grenade(orders[0].transform.position - transform.position);
-                    break;
-                default:
-                    Debug.Log("Command No Implimented:" + orders[0].type);
-                    break;
+                switch (orders[0].type)
+                {
+                    case CommandType.Move:
+                        yield return Move(orders[0].transform.position);
+                        break;
+                    case CommandType.Shoot:
+                        yield return Shoot(orders[0].transform.position - transform.position);
+                        break;
+                    case CommandType.Grenade:
+                        yield return Grenade(orders[0].transform.position - transform.position);
+                        break;
+                    default:
+                        Debug.Log("Command No Implimented:" + orders[0].type);
+                        break;
+                }
+                if (orders.Count > 0)
+                    orders[0].Remove();
             }
-            if (orders.Count > 0)
-                orders[0].Remove();
+            CmdRemoveFromServer();
         }
-        GameManager.unitsMoving.Remove(this);
+    }
+
+    [Command]
+    private void CmdAddToServer()
+    {
+        GameManager.Instance.s_unitsWithOrders[(int)team.team]++;
+    }
+    [Command]
+    private void CmdRemoveFromServer()
+    {
+        GameManager.Instance.s_unitsWithOrders[(int)team.team]--;
     }
 
     public IEnumerator Move(Vector3 destination)
@@ -124,14 +149,26 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(direction));
+        CmdShoot(direction);
         yield return new WaitForSeconds(0.2f);
     }
     public IEnumerator Grenade(Vector3 direction)
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        Instantiate(grenadePrefab, bulletSpawn.position, Quaternion.LookRotation(direction + Vector3.up * 4));
+        Debug.Log(grenadePrefab);
+        CmdGrenade(direction);
         yield return new WaitForSeconds(0.2f);
+    }
+
+    [Command]
+    public void CmdShoot(Vector3 direction)
+    {
+        NetworkServer.Spawn(Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(direction)));
+    }
+    [Command]
+    public void CmdGrenade(Vector3 direction)
+    {
+        NetworkServer.Spawn(Instantiate(grenadePrefab, bulletSpawn.position, Quaternion.LookRotation(direction + Vector3.up * 4)));
     }
 }
