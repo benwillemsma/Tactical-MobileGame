@@ -2,7 +2,7 @@
 
 public class FlagPoint : CapturePoint
 {
-    public override void CalculateCapture()
+    public override void CmdCalculateCapture()
     {
         Collider[] capturingUnits = Physics.OverlapSphere(transform.position, 1.25f, LayerMask.GetMask("Selectable"));
 

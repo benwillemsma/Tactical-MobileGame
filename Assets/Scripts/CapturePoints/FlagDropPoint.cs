@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class FlagDropPoint : CapturePoint
 {
-    public override void CalculateCapture()
+    public override void CmdCalculateCapture()
     {
         if (!isServer)
             return;

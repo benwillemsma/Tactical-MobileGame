@@ -10,6 +10,10 @@ public class CapturePoint : NetworkBehaviour
 
     [SyncVar, SerializeField]
     protected Team teamAssosiation;
+    [SyncVar]
+    protected Color teamColor = Color.yellow;
+
+    public List<Unit> capturingUnits = new List<Unit>();
 
     private void Start()
     {
@@ -18,34 +22,34 @@ public class CapturePoint : NetworkBehaviour
             GameManager.Instance.s_captures.Add(this);
             NetworkServer.Spawn(gameObject);
         }
+        GetComponent<Renderer>().material.color = teamColor;
     }
 
-    public virtual void CalculateCapture()
+    [Command]
+    public virtual void CmdCalculateCapture()
     {
-        if (!isServer)
-            return;
-
-        Collider[] capturingUnits = Physics.OverlapSphere(transform.position, 1.25f, LayerMask.GetMask("Unit"));
         Team checkTeam = Team.Neutral;
 
-        if (capturingUnits.Length > 0)
+        if (capturingUnits.Count > 0)
         {
-            checkTeam = capturingUnits[0].gameObject.GetComponent<Unit>().Team;
+            checkTeam = capturingUnits[0].Team;
 
-            for (int i = 1; i < capturingUnits.Length; i++)
+            for (int i = 1; i < capturingUnits.Count; i++)
             {
-                if (checkTeam != capturingUnits[i].gameObject.GetComponent<Unit>().Team)
+                if (checkTeam != capturingUnits[i].GetComponent<Unit>().Team)
                     return;
             }
 
             if (checkTeam != teamAssosiation)
             {
-                captureProgress += capturingUnits.Length;
+                captureProgress += capturingUnits.Count;
                 if (captureProgress >= 3)
                 {
                     captureProgress = 0;
                     teamAssosiation = checkTeam;
-                    changeTeams();
+                    Debug.Log(teamAssosiation);
+                    teamColor = GameManager.Instance.s_teams[(int)teamAssosiation].teamColor;
+                    RpcChangeTeams(teamColor);
                 }
             }
         }
@@ -53,11 +57,23 @@ public class CapturePoint : NetworkBehaviour
             GameManager.Instance.s_teams[(int)teamAssosiation].score++;
     }
 
-    void changeTeams()
+    [ClientRpc]
+    void RpcChangeTeams(Color newColor)
     {
-        if (teamAssosiation != Team.Neutral)
-            GetComponent<Renderer>().material.color = GameManager.Instance.s_teams[(int)teamAssosiation].teamColor;
-        else
-            GetComponent<Renderer>().material.color = Color.yellow;
+        GetComponent<Renderer>().material.color = newColor;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Unit temp = other.GetComponent<Unit>();
+        if (temp)
+            capturingUnits.Add(temp);
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        Unit temp = other.GetComponent<Unit>();
+        if (temp)
+            capturingUnits.Remove(temp);
     }
 }

@@ -11,7 +11,7 @@ public class PlayerTeam : NetworkBehaviour
     public Button TurnButton;
     public GameObject UnitPrefab;
 
-    private List<Unit> units = new List<Unit>();
+    public List<Unit> units = new List<Unit>();
     public ISelectable Selection;
 
     [SyncVar, Space(10)]
@@ -20,7 +20,7 @@ public class PlayerTeam : NetworkBehaviour
     public string teamName;
     [SyncVar]
     public Color teamColor;
-    [SyncVar]
+    [SyncVar,HideInInspector]
     public int teamLayer;
 
     [SyncVar, Space(10)]
@@ -52,8 +52,7 @@ public class PlayerTeam : NetworkBehaviour
         RpcInitPlayer(team, teamName, teamColor, teamLayer);
 
         GameManager.Instance.AddPlayer(this);
-        GameObject unit = Instantiate(UnitPrefab, transform.position, transform.rotation);
-        NetworkServer.SpawnWithClientAuthority(unit, gameObject);
+        CmdCreateUnit(transform.position, transform.rotation);
     }
     [ClientRpc]
     private void RpcInitPlayer(Team team,string teamName,Color teamColor,int teamLayer)
@@ -63,15 +62,24 @@ public class PlayerTeam : NetworkBehaviour
         this.teamName = teamName;
         this.teamColor = teamColor;
     }
-    #endregion
-    
+
+    [Command]
+    public void CmdCreateUnit(Vector3 spawnPoint,Quaternion spawnRotation)
+    {
+        GameObject unit = Instantiate(UnitPrefab, spawnPoint, spawnRotation);
+        NetworkServer.SpawnWithClientAuthority(unit, gameObject);
+    }
+
     private void OnDestroy()
     {
         GameManager.Instance.RemovePlayer(this);
     }
+    #endregion
+
+    #region Player Selection/Controls
     private void Update()
     {
-        if ( gameObject.layer != teamLayer)
+        if (gameObject.layer != teamLayer)
             gameObject.layer = teamLayer;
 
         if (isLocalPlayer && canInput)
@@ -82,12 +90,6 @@ public class PlayerTeam : NetworkBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
                 ToggleReady();
         }
-        if (units.Count <= 0)
-            Destroy(this);
-
-        else if (score >= GameManager.Instance.s_winningScore)
-            GameManager.Instance.s_winner = this;
-        
     }
     
     private void CheckSelection(Vector3 point)
@@ -108,7 +110,9 @@ public class PlayerTeam : NetworkBehaviour
         else if (Selection != null)
             Selection.Action(hit.point);
     }
+    #endregion
 
+    #region Player Commands
     [ClientRpc]
     public void RpcInvokeCommands()
     {
@@ -146,4 +150,5 @@ public class PlayerTeam : NetworkBehaviour
         if (isLocalPlayer)
             TurnButton.gameObject.SetActive(true);
     }
+    #endregion
 }

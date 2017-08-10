@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 
 public class Unit : NetworkBehaviour, ISelectable,IDamageable
 {
+    # region Initilization
     public float speed;
     public float health;
     public float maxMoveDistance;
@@ -18,12 +19,10 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
 
     [SerializeField]
     GameObject commandUI;
-    [SerializeField]
-    GameObject bulletPrefab;
-    [SerializeField]
-    GameObject grenadePrefab;
-    [SerializeField]
-    Transform bulletSpawn;
+
+    public GameObject bulletPrefab;
+    public GameObject grenadePrefab;
+    public Transform bulletSpawn;
 
     [Space(20)]
     public List<Command> orders;
@@ -44,8 +43,9 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         Model = transform.GetChild(1).gameObject;
         Model.GetComponent<Renderer>().material.color = team.teamColor;
     }
+    #endregion
 
-    // ISelectable
+    #region ISelectable
     public virtual void Selected()
     {
         team.Selection = this;
@@ -56,6 +56,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         Deselected();
     }
+
     public virtual void Deselected()
     {
         ToggleCommands();
@@ -69,8 +70,9 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         for (int i = 0; i < orders.Count; i++)
             orders[i].gameObject.SetActive(orders[i].gameObject.activeSelf);
     }
+    #endregion
 
-    //IDamageable
+    #region IDamageable
     public virtual void TakeDamage(float damage)
     {
         health -= damage;
@@ -78,26 +80,33 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         if (health <= 0)
             Die();
     }
+
     public virtual void Die()
     {
-        if (isServer)
-            CmdRemoveFromServer();
+        if (orders.Count > 0)
+        {
+            StopAllCoroutines();
+            orders.Clear();
+            CmdUnitDone();
+        }
 
-        StopAllCoroutines();
         team.RemoveUnits(this);
         Destroy(gameObject);
     }
+
     public void OnDestroy()
     {
+        StopAllCoroutines();
         team.RemoveUnits(this);
     }
+    #endregion
 
-    //Actions
+    #region Unit Actions
     public virtual IEnumerator InvokeCommands()
     {
         if (orders.Count > 0)
         {
-            CmdAddToServer();
+            CmdUnitBuisy();
 
             while (orders.Count > 0)
             {
@@ -119,19 +128,8 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
                 if (orders.Count > 0)
                     orders[0].Remove();
             }
-            CmdRemoveFromServer();
+            CmdUnitDone();
         }
-    }
-
-    [Command]
-    private void CmdAddToServer()
-    {
-        GameManager.Instance.s_unitsWithOrders[(int)team.team]++;
-    }
-    [Command]
-    private void CmdRemoveFromServer()
-    {
-        GameManager.Instance.s_unitsWithOrders[(int)team.team]--;
     }
 
     public IEnumerator Move(Vector3 destination)
@@ -145,6 +143,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
             yield return null;
         }
     }
+
     public IEnumerator Shoot(Vector3 direction)
     {
         transform.LookAt(transform.position + direction);
@@ -152,13 +151,25 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         CmdShoot(direction);
         yield return new WaitForSeconds(0.2f);
     }
+
     public IEnumerator Grenade(Vector3 direction)
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        Debug.Log(grenadePrefab);
         CmdGrenade(direction);
         yield return new WaitForSeconds(0.2f);
+    }
+
+    [Command]
+    public void CmdUnitBuisy()
+    {
+        GameManager.Instance.s_unitsWithOrders[(int)team.team]++;
+    }
+
+    [Command]
+    public void CmdUnitDone()
+    {
+        GameManager.Instance.s_unitsWithOrders[(int)team.team]--;
     }
 
     [Command]
@@ -166,9 +177,11 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         NetworkServer.Spawn(Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(direction)));
     }
+
     [Command]
     public void CmdGrenade(Vector3 direction)
     {
         NetworkServer.Spawn(Instantiate(grenadePrefab, bulletSpawn.position, Quaternion.LookRotation(direction + Vector3.up * 4)));
     }
+    #endregion
 }

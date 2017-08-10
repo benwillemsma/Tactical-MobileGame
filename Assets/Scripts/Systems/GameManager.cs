@@ -30,7 +30,7 @@ public class GameManager : NetworkBehaviour
     public int s_winningScore = 10;
 
     // GUI
-    public Text[] s_scoreText;
+    public Text[] scoreText = new Text[4];
 
     private void Start ()
     {
@@ -41,14 +41,21 @@ public class GameManager : NetworkBehaviour
         else
             Destroy(gameObject);
 
-        s_unitsWithOrders = new int[4];
-        s_playerReady = new bool[4];
+        if (isServer) {
+            s_unitsWithOrders = new int[4];
+            s_playerReady = new bool[4];
+        }
 
-        Screen.orientation = ScreenOrientation.LandscapeLeft;
+        if (scoreText.Length == 0)
+            scoreText = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
     }
     private void Update()
     {
-        s_teamAmount = NetManager.numPlayers;
+        if (isServer)
+        {
+            s_teamAmount = NetManager.numPlayers;
+            UpdateScoreUI();
+        }
     }
 
     public void AddPlayer(PlayerTeam player)
@@ -58,26 +65,39 @@ public class GameManager : NetworkBehaviour
     }
     public void RemovePlayer(PlayerTeam player)
     {
-        s_teamAmount--;
         s_teams.Remove(player);
-        CheckForWinner();
+        s_teamAmount--;
     }
 
     private void UpdateScoreUI ()
     {
+
         for (int i = 0; i < s_teamAmount; i++)
         {
-            s_scoreText[i].enabled = true;
-            s_scoreText[i].text = s_teams[i].teamName + ": " + s_teams[i].score;
+            if (s_teams.Count == s_teamAmount)
+            {
+                scoreText[i].enabled = true;
+                scoreText[i].text = s_teams[i].teamName + ": " + s_teams[i].score;
+            }
         }
-        for (int i = s_teamAmount; i < s_scoreText.Length; i++)
-            s_scoreText[i].enabled = false;
+        for (int i = s_teamAmount; i < scoreText.Length; i++)
+            scoreText[i].enabled = false;
+
+        // Update clients
+        for (int i = 0; i < scoreText.Length; i++)
+            RpcUpdateScoreUI(i, scoreText[i].enabled, scoreText[i].text);
     }
+    [ClientRpc]
+    private void RpcUpdateScoreUI(int i, bool enabled,string text)
+    {
+        scoreText[i].enabled = enabled;
+        scoreText[i].text = text;
+    }
+
     public void CheckReadyStates()
     {
         for (int i = 0; i < s_teamAmount; i++)
         {
-            Debug.Log(i + ": " + !s_playerReady[i]);
             if (!s_playerReady[i])
                 return;
         }
@@ -85,6 +105,18 @@ public class GameManager : NetworkBehaviour
     }
     public void CheckForWinner()
     {
+        for (int i = 0; i < s_teams.Count; i++)
+        {
+            if (s_teams[i].units.Count <= 0)
+            {
+                Debug.Log("here");
+                RemovePlayer(s_teams[i]);
+            }
+
+            if (s_teams[i].score >= s_winningScore)
+                s_winner = s_teams[i];
+        }
+
         if (s_teamAmount == 1)
             s_winner = s_teams[0];
 
@@ -128,7 +160,7 @@ public class GameManager : NetworkBehaviour
     private void Endturn()
     {
         for (int i = 0; i < s_captures.Count; i++)
-            s_captures[i].CalculateCapture();
+            s_captures[i].CmdCalculateCapture();
 
         CheckForWinner();
 
@@ -145,16 +177,14 @@ public class GameManager : NetworkBehaviour
             s_teams[i].RpcInvokeCommands();
 
         //Wait for all units to stop moving
-        while (UnitsWithOrdrsRemaining() > 0)
+        while (UnitsWithOrdorsRemaining() > 0)
             yield return null;
     }
-    private int UnitsWithOrdrsRemaining()
+    private int UnitsWithOrdorsRemaining()
     {
         int temp = 0;
         for (int i = 0; i < s_unitsWithOrders.Length; i++)
-        {
             temp += s_unitsWithOrders[i];
-        }
         return temp;
     }
 }
