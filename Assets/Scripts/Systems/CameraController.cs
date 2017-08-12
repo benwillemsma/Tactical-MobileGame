@@ -13,7 +13,7 @@ public class CameraController : MonoBehaviour
             Debug.LogError("CameraScript is not attached to a camera");
     }
 
-    void Update ()
+    private void Update ()
     {
         if (Input.GetButton("Click") && (!PlayerTeam.LocalTeam || PlayerTeam.LocalTeam.Selection == null))
         {
