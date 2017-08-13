@@ -41,7 +41,8 @@ public class GameManager : NetworkBehaviour
         else
             Destroy(gameObject);
 
-        if (isServer) {
+        if (isServer)
+        {
             s_unitsWithOrders = new int[4];
             s_playerReady = new bool[4];
         }
@@ -51,6 +52,8 @@ public class GameManager : NetworkBehaviour
     }
     private void Update()
     {
+        if (Input.GetButtonDown("Exit"))
+            Application.Quit();
         if (isServer)
         {
             s_teamAmount = NetManager.numPlayers;

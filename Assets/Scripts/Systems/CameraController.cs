@@ -15,7 +15,7 @@ public class CameraController : MonoBehaviour
 
     void Update ()
     {
-        if (Input.GetButton("Click") && (!PlayerTeam.LocalTeam || PlayerTeam.LocalTeam.Selection == null))
+        if (Input.GetButton("LeftClick") && (!PlayerTeam.LocalTeam || PlayerTeam.LocalTeam.Selection == null))
         {
             if (Input.touchCount > 0)
             {

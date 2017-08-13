@@ -42,7 +42,7 @@ public class MoveCommand : Command
                 {
                     Deselected();
                     Remove();
-                    unit.ToggleCommands();
+                    unit.ToggleCommands(true);
                     break;
                 }
 

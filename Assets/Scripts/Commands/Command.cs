@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public enum CommandType
 {
@@ -12,10 +13,12 @@ public enum CommandType
 public class Command : MonoBehaviour, ISelectable
 {
     public CommandType type;
+    public int actionPoints;
 
     public Unit unit;
 
     public Transform[] visualMarkers;
+    public GameObject undoButton;
 
     private List<Transform> lineSegments = new List<Transform>();
     protected static Vector3 groundOffset = new Vector3(0, 0.2f, 0);
@@ -39,9 +42,9 @@ public class Command : MonoBehaviour, ISelectable
             if (Input.touchCount > 0)
             {
                 if (Input.GetTouch(0).phase == TouchPhase.Moved)
-                    transform.position = GameManager.ScreenRay(Input.GetTouch(0).position).point + touchOffset;
+                    transform.position = GameManager.ScreenRay(Input.GetTouch(0).position).point;
                 if (Input.GetTouch(0).phase == TouchPhase.Ended)
-                    Action(GameManager.ScreenRay(Input.GetTouch(0).position).point + touchOffset);
+                    Action(GameManager.ScreenRay(Input.GetTouch(0).position).point);
             }
             else
                 transform.position = GameManager.ScreenRay(Input.mousePosition).point;
@@ -64,13 +67,24 @@ public class Command : MonoBehaviour, ISelectable
     {
         Deselected();
         selected = false;
-        unit.ToggleCommands();
+        unit.ToggleCommands(true);
         transform.position = point;
     }
     public virtual void Deselected()
     {
+        unit.ToggleCommands(true);
         gameObject.layer = unit.gameObject.layer;
         unit.team.Selection = unit;
+    }
+
+    public void Cancel()
+    {
+        Remove();
+    }
+
+    public void OnDestroy()
+    {
+        unit.orders.Remove(this);
     }
 
     // Visual Funciton;

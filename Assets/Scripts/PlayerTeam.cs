@@ -29,6 +29,8 @@ public class PlayerTeam : NetworkBehaviour
     [HideInInspector]
     public bool canInput = true;
 
+    private float tapCooldown;
+
     #region Player initialization
     private void Start()
     {
@@ -38,6 +40,7 @@ public class PlayerTeam : NetworkBehaviour
         {
             TurnButton = GameObject.Find("TurnButton").GetComponent<Button>();
             TurnButton.onClick.AddListener(delegate { ToggleReady(); });
+
             CmdInitPlayer();
         }
     }
@@ -79,16 +82,33 @@ public class PlayerTeam : NetworkBehaviour
     #region Player Selection/Controls
     private void Update()
     {
+        if(tapCooldown > 0)
+            tapCooldown -= Time.deltaTime;
+
         if (gameObject.layer != teamLayer)
             gameObject.layer = teamLayer;
 
         if (isLocalPlayer && canInput)
         {
-            if (Input.GetButtonDown("Click"))
+            if (Input.GetButtonDown("LeftClick") && tapCooldown <= 0)
+            {
+                tapCooldown = 0.2f;
                 CheckSelection(Input.mousePosition);
+            }
+            else if
+                (Input.GetButtonDown("LeftClick") && tapCooldown > 0)
+            {
+                if(Input.touchCount > 0)
+                    CancelSelection(Input.mousePosition);
+                else
+                    CancelSelection();
+            }
+
+            else if (Input.GetButtonDown("RightClick"))
+                CancelSelection(Input.mousePosition);
 
             if (Input.GetKeyDown(KeyCode.Space))
-                ToggleReady();
+            ToggleReady();
         }
     }
     
@@ -110,6 +130,25 @@ public class PlayerTeam : NetworkBehaviour
         else if (Selection != null)
             Selection.Action(hit.point);
     }
+
+    private void CancelSelection(Vector3 point)
+    {
+        tapCooldown = 0;
+        RaycastHit hit = GameManager.ScreenRay(point, gameObject.layer);
+        ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
+        if (hitObject != null)
+        {
+            hitObject.Cancel();
+        }
+    }
+    private void CancelSelection()
+    {
+        tapCooldown = 0;
+        if (Selection != null)
+            Selection.Cancel();
+        Selection = null;
+    }
+
     #endregion
 
     #region Player Commands

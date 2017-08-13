@@ -9,6 +9,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     public float speed;
     public float health;
     public float maxMoveDistance;
+    public int actionsRemaining = 1;
 
     public bool hasFlag = false;
 
@@ -16,7 +17,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     
     public PlayerTeam team;
     private GameObject Model;
-
+    
     [SerializeField]
     GameObject commandUI;
 
@@ -49,7 +50,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     public virtual void Selected()
     {
         team.Selection = this;
-        ToggleCommands();
+        ToggleCommands(true);
     }
 
     public virtual void Action(Vector3 point)
@@ -59,16 +60,19 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
 
     public virtual void Deselected()
     {
-        ToggleCommands();
+        ToggleCommands(false);
         team.Selection = null;
     }
 
-    public void ToggleCommands()
-    {
-        commandUI.SetActive(!transform.GetChild(0).gameObject.activeInHierarchy);
+    public virtual void Cancel() { Deselected(); }
 
-        for (int i = 0; i < orders.Count; i++)
-            orders[i].gameObject.SetActive(orders[i].gameObject.activeSelf);
+    public void ToggleCommands(bool active)
+    {
+        commandUI.SetActive(active);
+        
+        //for (int i = 0; i < orders.Count; i++)
+        //    orders[i].gameObject.SetActive(!orders[i].gameObject.activeSelf);
+        
     }
     #endregion
 
@@ -130,6 +134,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
             }
             CmdUnitDone();
         }
+        actionsRemaining = 1;
     }
 
     public IEnumerator Move(Vector3 destination)
