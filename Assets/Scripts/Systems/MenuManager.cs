@@ -6,7 +6,6 @@ using UnityEngine.Networking;
 public class MenuManager : MonoBehaviour
 {
     public static MenuManager SM_Instance;
-
     public Canvas[] subCanvases;
 
     private void Start ()

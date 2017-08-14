@@ -32,23 +32,26 @@ public class GameManager : NetworkBehaviour
     // GUI
     public Text[] scoreText = new Text[4];
 
-    private void Start ()
+    private void Awake ()
     {
         NetManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        //NetManager = GameObject.Find("LobbyManager").GetComponent<NetworkManager>();
 
         if (!Instance)
             Instance = this;
         else
             Destroy(gameObject);
 
+        if (scoreText.Length == 0)
+            scoreText = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
+    }
+    private void Start()
+    {
         if (isServer)
         {
             s_unitsWithOrders = new int[4];
             s_playerReady = new bool[4];
         }
-
-        if (scoreText.Length == 0)
-            scoreText = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
     }
     private void Update()
     {
@@ -58,6 +61,17 @@ public class GameManager : NetworkBehaviour
         {
             s_teamAmount = NetManager.numPlayers;
             UpdateScoreUI();
+        }
+    }
+    private void OnGUI()
+    {
+        int y = 0;
+        for (int i = 0; i < s_teamAmount; i++)
+        {
+            GUI.Label(new Rect(0, y, 300, 20), "" + s_teams[i].name);
+            y += 20;
+            GUI.Label(new Rect(0, y, 300, 20), "" + s_teams[i].units.Count);
+            y += 20;
         }
     }
 

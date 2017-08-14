@@ -10,7 +10,6 @@ public class LobbyPlayerController : MonoBehaviour
 	void Start ()
     {
         player = GetComponent<NetworkLobbyPlayer>();
-        player.readyToBegin = true;
 	}
 	
 	void Update () {

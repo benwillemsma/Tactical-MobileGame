@@ -35,7 +35,7 @@ public class CameraController : MonoBehaviour
                     thisCamera.orthographicSize -= (Input.GetTouch(0).deltaPosition.magnitude + Input.GetTouch(1).deltaPosition.magnitude) * Time.deltaTime;
             }
         }
-        else thisCamera.orthographicSize += Input.GetAxis("Mouse ScrollWheel");
+        else thisCamera.orthographicSize -= Input.GetAxis("Mouse ScrollWheel") * 2;
 
         Mathf.Clamp(thisCamera.orthographicSize, 5, 25);
     }

@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
-using UnityEngine.UI;
 
 public enum CommandType
 {
@@ -18,7 +17,6 @@ public class Command : MonoBehaviour, ISelectable
     public Unit unit;
 
     public Transform[] visualMarkers;
-    public GameObject undoButton;
 
     private List<Transform> lineSegments = new List<Transform>();
     protected static Vector3 groundOffset = new Vector3(0, 0.2f, 0);
@@ -52,6 +50,7 @@ public class Command : MonoBehaviour, ISelectable
 
     public virtual void Remove()
     {
+        unit.actionsRemaining++;
         unit.orders.Remove(this);
         Destroy(gameObject);
     }

@@ -69,10 +69,6 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     public void ToggleCommands(bool active)
     {
         commandUI.SetActive(active);
-        
-        //for (int i = 0; i < orders.Count; i++)
-        //    orders[i].gameObject.SetActive(!orders[i].gameObject.activeSelf);
-        
     }
     #endregion
 

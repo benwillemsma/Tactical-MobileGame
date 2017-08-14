@@ -15,7 +15,7 @@ public class CommandUI : MonoBehaviour, ISelectable
     {
         if (unit.actionsRemaining >= commandPrefab.actionPoints)
         {
-            Command tempCmd = Instantiate(commandPrefab, unit.transform.position, unit.transform.rotation, GameObject.Find("Commands").transform).GetComponent<Command>();
+            Command tempCmd = Instantiate(commandPrefab, unit.transform.position, Quaternion.identity, GameObject.Find("Commands").transform).GetComponent<Command>();
             unit.actionsRemaining -= tempCmd.actionPoints;
             tempCmd.unit = unit;
             tempCmd.Selected();

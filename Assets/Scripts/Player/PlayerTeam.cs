@@ -55,7 +55,7 @@ public class PlayerTeam : NetworkBehaviour
         RpcInitPlayer(team, teamName, teamColor, teamLayer);
 
         GameManager.Instance.AddPlayer(this);
-        CmdCreateUnit(transform.position, transform.rotation);
+        CmdCreateUnit();
     }
     [ClientRpc]
     private void RpcInitPlayer(Team team,string teamName,Color teamColor,int teamLayer)
@@ -67,10 +67,11 @@ public class PlayerTeam : NetworkBehaviour
     }
 
     [Command]
-    public void CmdCreateUnit(Vector3 spawnPoint,Quaternion spawnRotation)
+    public void CmdCreateUnit()
     {
-        GameObject unit = Instantiate(UnitPrefab, spawnPoint, spawnRotation);
-        NetworkServer.SpawnWithClientAuthority(unit, gameObject);
+        NetworkServer.SetClientReady(connectionToClient);
+        GameObject unit = Instantiate(UnitPrefab, transform.position, transform.rotation);
+        NetworkServer.SpawnWithClientAuthority(unit, connectionToClient);
     }
 
     private void OnDestroy()
