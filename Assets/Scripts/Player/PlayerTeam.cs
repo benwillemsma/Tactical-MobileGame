@@ -30,6 +30,13 @@ public class PlayerTeam : NetworkBehaviour
     public bool canInput = true;
 
     private float tapCooldown;
+    private bool showGUI = false;
+
+    private void OnGUI()
+    {
+        int y = 0;
+        GUI.Label(new Rect(100 * (int)team + 30, y, 100 * (int)team + 100, 20), "");
+    }
 
     #region Player initialization
     private void Start()
@@ -38,23 +45,32 @@ public class PlayerTeam : NetworkBehaviour
 
         if (isLocalPlayer)
         {
-            TurnButton = GameObject.Find("TurnButton").GetComponent<Button>();
+            TurnButton = GameObject.Find("ReadyButton").GetComponent<Button>();
             TurnButton.onClick.AddListener(delegate { ToggleReady(); });
 
             CmdInitPlayer();
+
+            GameManager.Instance.AddPlayer(this);
         }
     }
+
+    public override void OnStartLocalPlayer()
+    {
+        Debug.Log(teamName);
+    }
+
     [Command]
     private void CmdInitPlayer()
     {
-        team = (Team)GameManager.Instance.s_teams.Count;
-        teamName = "Team" + (GameManager.Instance.s_teams.Count + 1);
+        NetworkManager manager = FindObjectOfType<NetworkManager>();
+
+        team = (Team)manager.numPlayers - 1;
+        teamName = "Team" + manager.numPlayers;
         teamColor = Random.ColorHSV();
-        teamLayer = 9 + GameManager.Instance.s_teams.Count;
+        teamLayer = 9 + manager.numPlayers - 1;
 
         RpcInitPlayer(team, teamName, teamColor, teamLayer);
-
-        GameManager.Instance.AddPlayer(this);
+        
         CmdCreateUnit();
     }
     [ClientRpc]
@@ -69,14 +85,14 @@ public class PlayerTeam : NetworkBehaviour
     [Command]
     public void CmdCreateUnit()
     {
-        NetworkServer.SetClientReady(connectionToClient);
         GameObject unit = Instantiate(UnitPrefab, transform.position, transform.rotation);
         NetworkServer.SpawnWithClientAuthority(unit, connectionToClient);
     }
 
     private void OnDestroy()
     {
-        GameManager.Instance.RemovePlayer(this);
+        if (GameManager.Instance)
+            GameManager.Instance.s_teams[(int)team] = null;
     }
     #endregion
 
@@ -109,37 +125,41 @@ public class PlayerTeam : NetworkBehaviour
                 CancelSelection(Input.mousePosition);
 
             if (Input.GetKeyDown(KeyCode.Space))
-            ToggleReady();
+                ToggleReady();
         }
     }
     
     private void CheckSelection(Vector3 point)
     {
         RaycastHit hit = GameManager.ScreenRay(point, gameObject.layer);
-        ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
-
-        if (hitObject != null)
+        if (hit.collider != null)
         {
-            if (Selection != null)
+            ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
+
+            if (hitObject != null)
             {
-                Selection.Action(hit.point);
-                hitObject.Selected();
+                if (Selection != null)
+                {
+                    Selection.Action(hit.point);
+                    hitObject.Selected();
+                }
+                else if (hitObject != Selection)
+                    hitObject.Selected();
             }
-            else if (hitObject != Selection)
-                hitObject.Selected();
+            else if (Selection != null)
+                Selection.Action(hit.point);
         }
-        else if (Selection != null)
-            Selection.Action(hit.point);
     }
 
     private void CancelSelection(Vector3 point)
     {
         tapCooldown = 0;
         RaycastHit hit = GameManager.ScreenRay(point, gameObject.layer);
-        ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
-        if (hitObject != null)
+        if (hit.collider != null)
         {
-            hitObject.Cancel();
+            ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
+            if (hitObject != null)
+                hitObject.Cancel();
         }
     }
     private void CancelSelection()
@@ -180,8 +200,11 @@ public class PlayerTeam : NetworkBehaviour
     [Command]
     public void CmdIsReady()
     {
-        GameManager.Instance.s_playerReady[(int)team] = true;
-        GameManager.Instance.CheckReadyStates();
+        if (GameManager.Instance)
+        {
+            GameManager.Instance.s_playerReady[(int)team] = true;
+            GameManager.Instance.CheckReadyStates();
+        }
     }
     [ClientRpc]
     public void RpcToggleReady()

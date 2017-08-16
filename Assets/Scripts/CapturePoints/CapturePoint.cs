@@ -18,10 +18,7 @@ public class CapturePoint : NetworkBehaviour
     private void Start()
     {
         if (isServer)
-        {
             GameManager.Instance.s_captures.Add(this);
-            NetworkServer.Spawn(gameObject);
-        }
         GetComponent<Renderer>().material.color = teamColor;
     }
 

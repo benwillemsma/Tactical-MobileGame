@@ -24,7 +24,6 @@ public class GameManager : NetworkBehaviour
 
     // Game Specific Variables
     public bool[] s_playerReady;
-    private int s_teamAmount;
 
     public PlayerTeam s_winner = null;
     public int s_winningScore = 10;
@@ -35,7 +34,6 @@ public class GameManager : NetworkBehaviour
     private void Awake ()
     {
         NetManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
-        //NetManager = GameObject.Find("LobbyManager").GetComponent<NetworkManager>();
 
         if (!Instance)
             Instance = this;
@@ -57,47 +55,40 @@ public class GameManager : NetworkBehaviour
     {
         if (Input.GetButtonDown("Exit"))
             Application.Quit();
+
         if (isServer)
-        {
-            s_teamAmount = NetManager.numPlayers;
             UpdateScoreUI();
-        }
     }
     private void OnGUI()
     {
-        int y = 0;
-        for (int i = 0; i < s_teamAmount; i++)
+        GUI.Label(new Rect(550, 0, 300, 20), "GameManager");
+        for (int i = 0; i < s_teams.Count; i++)
         {
-            GUI.Label(new Rect(0, y, 300, 20), "" + s_teams[i].name);
-            y += 20;
-            GUI.Label(new Rect(0, y, 300, 20), "" + s_teams[i].units.Count);
+            int y = 0;
+            GUI.Label(new Rect(100 * (int)s_teams[i].team, y, 300, 20), "" + s_teams[i].teamName);
+            GUI.Label(new Rect(100 * (int)s_teams[i].team + 50, y, 300, 20), "" + s_teams[i].units.Count);
             y += 20;
         }
     }
 
-    public void AddPlayer(PlayerTeam player)
+    public void AddPlayer(PlayerTeam newTeam)
     {
-        s_teamAmount++;
-        s_teams.Add(player);
+        s_teams.Add(newTeam);
     }
-    public void RemovePlayer(PlayerTeam player)
+    public void RemovePlayer(PlayerTeam Team)
     {
-        s_teams.Remove(player);
-        s_teamAmount--;
+        s_teams.Remove(Team);
     }
 
     private void UpdateScoreUI ()
     {
 
-        for (int i = 0; i < s_teamAmount; i++)
+        for (int i = 0; i < s_teams.Count; i++)
         {
-            if (s_teams.Count == s_teamAmount)
-            {
-                scoreText[i].enabled = true;
-                scoreText[i].text = s_teams[i].teamName + ": " + s_teams[i].score;
-            }
+            scoreText[i].enabled = true;
+            scoreText[i].text = s_teams[i].teamName + ": " + s_teams[i].score;
         }
-        for (int i = s_teamAmount; i < scoreText.Length; i++)
+        for (int i = s_teams.Count; i < scoreText.Length; i++)
             scoreText[i].enabled = false;
 
         // Update clients
@@ -113,7 +104,7 @@ public class GameManager : NetworkBehaviour
 
     public void CheckReadyStates()
     {
-        for (int i = 0; i < s_teamAmount; i++)
+        for (int i = 0; i < s_teams.Count; i++)
         {
             if (!s_playerReady[i])
                 return;
@@ -124,18 +115,9 @@ public class GameManager : NetworkBehaviour
     {
         for (int i = 0; i < s_teams.Count; i++)
         {
-            if (s_teams[i].units.Count <= 0)
-            {
-                Debug.Log("here");
-                RemovePlayer(s_teams[i]);
-            }
-
             if (s_teams[i].score >= s_winningScore)
                 s_winner = s_teams[i];
         }
-
-        if (s_teamAmount == 1)
-            s_winner = s_teams[0];
 
         if (s_winner != null)
             EndGame();
@@ -181,7 +163,7 @@ public class GameManager : NetworkBehaviour
 
         CheckForWinner();
 
-        for (int i = 0; i < s_teamAmount; i++)
+        for (int i = 0; i < s_teams.Count; i++)
         {
             s_teams[i].RpcToggleReady();
             s_playerReady[i] = false;
@@ -190,7 +172,7 @@ public class GameManager : NetworkBehaviour
 
     private IEnumerator WaitForUnits()
     {
-        for (int i = 0; i < s_teamAmount; i++)
+        for (int i = 0; i < s_teams.Count; i++)
             s_teams[i].RpcInvokeCommands();
 
         //Wait for all units to stop moving
