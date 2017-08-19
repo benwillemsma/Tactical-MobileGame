@@ -15,7 +15,7 @@ public enum Team
 
 public class GameManager : NetworkBehaviour
 {
-    public static NetworkManager NetManager;
+    public static NetworkManager netManager;
     public static GameManager Instance;
 
     public List<PlayerTeam> s_teams = new List<PlayerTeam>();
@@ -33,7 +33,7 @@ public class GameManager : NetworkBehaviour
 
     private void Awake ()
     {
-        NetManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        netManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
 
         if (!Instance)
             Instance = this;
@@ -50,6 +50,7 @@ public class GameManager : NetworkBehaviour
             s_unitsWithOrders = new int[4];
             s_playerReady = new bool[4];
         }
+        ClientScene.AddPlayer(netManager.client.connection, 0);
     }
     private void Update()
     {
@@ -58,10 +59,12 @@ public class GameManager : NetworkBehaviour
 
         if (isServer)
             UpdateScoreUI();
+
     }
     private void OnGUI()
     {
-        GUI.Label(new Rect(550, 0, 300, 20), "GameManager");
+        GUI.color = Color.gray;
+        GUI.Label(new Rect(550, 0, 300, 20), "GameManager: " + s_teams.Count);
         for (int i = 0; i < s_teams.Count; i++)
         {
             int y = 0;
@@ -138,15 +141,10 @@ public class GameManager : NetworkBehaviour
         return hit;
     }
 
-    private void StartGame()
-    {
-
-    }
     private void EndGame()
     {
 
     }
-    
     public void StartTurn()
     {
         StartCoroutine(RunTurn());

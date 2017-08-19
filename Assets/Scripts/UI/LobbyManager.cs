@@ -7,8 +7,7 @@ using UnityEngine.SceneManagement;
 public class LobbyManager : MonoBehaviour
 {
     public static LobbyManager Instance; 
-
-    private NetworkManager netManager;
+    
     private List<LobbyPlayer> lobbyPlayers = new List<LobbyPlayer>();
 
     public Transform PlayerInfoPanel;
@@ -27,14 +26,18 @@ public class LobbyManager : MonoBehaviour
         }
         else
             Destroy(gameObject);
-
-        netManager = FindObjectOfType<NetworkManager>();
+        
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         connections = NetworkServer.connections.Count;
 
         for (int i = 0; i < NetworkServer.connections.Count; i++)
             AddLobbyPlayer();
+    }
+
+    private void OnGUI()
+    {
+        GUI.Label(new Rect(5, 20, 100, 20), "" + NetworkServer.connections.Count);
     }
 
     private void Update()
@@ -54,11 +57,6 @@ public class LobbyManager : MonoBehaviour
         {
             for (int i = 0; i < NetworkServer.connections.Count; i++)
                 AddLobbyPlayer();
-        }
-        if (scene.name == "Game")
-        {
-            for (int i = 0; i < NetworkServer.connections.Count; i++)
-                ClientScene.AddPlayer(netManager.client.connection, 0);
         }
     }
 

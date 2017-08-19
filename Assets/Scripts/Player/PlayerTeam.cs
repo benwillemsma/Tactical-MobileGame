@@ -34,13 +34,21 @@ public class PlayerTeam : NetworkBehaviour
 
     private void OnGUI()
     {
-        int y = 0;
-        GUI.Label(new Rect(100 * (int)team + 30, y, 100 * (int)team + 100, 20), "");
+        int y = 2;
+        GUI.color = teamColor;
+        if (showGUI)
+        {
+            GUI.Label(new Rect(100 * (int)team, y, 300, 20), "" + teamName);
+            GUI.Label(new Rect(100 * (int)team + 50, y, 300, 20), "" + units.Count);
+        }
+        else
+            GUI.Label(new Rect(100 * (int)team, y, 300, 20), "Error");
     }
 
     #region Player initialization
     private void Start()
     {
+        showGUI = true;
         LocalTeam = this;
 
         if (isLocalPlayer)
@@ -49,21 +57,16 @@ public class PlayerTeam : NetworkBehaviour
             TurnButton.onClick.AddListener(delegate { ToggleReady(); });
 
             CmdInitPlayer();
-
-            GameManager.Instance.AddPlayer(this);
         }
-    }
-
-    public override void OnStartLocalPlayer()
-    {
-        Debug.Log(teamName);
     }
 
     [Command]
     private void CmdInitPlayer()
     {
-        NetworkManager netManager = FindObjectOfType<NetworkManager>();
-        team = (Team)netManager.numPlayers - 1;
+        GameManager.Instance.AddPlayer(this);
+        Debug.LogError((Team)GameManager.Instance.s_teams.IndexOf(this));
+        team = (Team)GameManager.Instance.s_teams.IndexOf(this);
+       
         teamLayer = 9 + (int)team;
 
         LobbyManager lobbyManager = FindObjectOfType<LobbyManager>();
@@ -71,7 +74,6 @@ public class PlayerTeam : NetworkBehaviour
         teamColor = lobbyManager.GetLobbyPlayer((int)team).teamColor;
 
         RpcInitPlayer(team, teamName, teamColor, teamLayer);
-        
         CmdCreateUnit();
     }
     [ClientRpc]
@@ -100,7 +102,7 @@ public class PlayerTeam : NetworkBehaviour
     #region Player Selection/Controls
     private void Update()
     {
-        if(tapCooldown > 0)
+        if (tapCooldown > 0)
             tapCooldown -= Time.deltaTime;
 
         if (gameObject.layer != teamLayer)

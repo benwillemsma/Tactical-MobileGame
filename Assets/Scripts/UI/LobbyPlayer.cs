@@ -6,7 +6,7 @@ using UnityEngine.Networking;
 
 public class LobbyPlayer : MonoBehaviour
 {
-    private NetworkManager netManager;
+    //private NetworkManager netManager;
     [SerializeField]
     private Dropdown colorOptionsPrefab;
     [SerializeField]
@@ -21,10 +21,12 @@ public class LobbyPlayer : MonoBehaviour
 
     public void Start()
     {
-        netManager = FindObjectOfType<NetworkManager>();
+        //netManager = FindObjectOfType<NetworkManager>();
 
         colorOptions = LobbyManager.CreateColorOptions(colorOptionsPrefab.gameObject, transform);
         colorOptions.onValueChanged.AddListener(delegate { ChangeColor(); });
+        //Button turnButton = GameObject.Find("ReadyButton").GetComponent<Button>();
+        //turnButton.onClick.AddListener(delegate { ClientScene.Ready(netManager.client.connection); });
 
         nameInput.text = teamName;
         for (int i = 0; i < LobbyManager.colors.Length; i++)
