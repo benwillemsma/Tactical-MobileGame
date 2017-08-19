@@ -44,7 +44,6 @@ public class CapturePoint : NetworkBehaviour
                 {
                     captureProgress = 0;
                     teamAssosiation = checkTeam;
-                    Debug.Log(teamAssosiation);
                     teamColor = GameManager.Instance.s_teams[(int)teamAssosiation].teamColor;
                     RpcChangeTeams(teamColor);
                 }

@@ -7,8 +7,10 @@ using UnityEngine.Networking;
 public class LobbyPlayer : MonoBehaviour
 {
     private NetworkManager netManager;
-    public Dropdown colorOptionsPrefab;
-    public InputField nameInput;
+    [SerializeField]
+    private Dropdown colorOptionsPrefab;
+    [SerializeField]
+    private InputField nameInput;
 
     [Space(20)]
     public Team team;
@@ -22,6 +24,7 @@ public class LobbyPlayer : MonoBehaviour
         netManager = FindObjectOfType<NetworkManager>();
 
         colorOptions = LobbyManager.CreateColorOptions(colorOptionsPrefab.gameObject, transform);
+        colorOptions.onValueChanged.AddListener(delegate { ChangeColor(); });
 
         nameInput.text = teamName;
         for (int i = 0; i < LobbyManager.colors.Length; i++)

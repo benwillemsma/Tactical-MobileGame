@@ -62,12 +62,13 @@ public class PlayerTeam : NetworkBehaviour
     [Command]
     private void CmdInitPlayer()
     {
-        NetworkManager manager = FindObjectOfType<NetworkManager>();
+        NetworkManager netManager = FindObjectOfType<NetworkManager>();
+        team = (Team)netManager.numPlayers - 1;
+        teamLayer = 9 + (int)team;
 
-        team = (Team)manager.numPlayers - 1;
-        teamName = "Team" + manager.numPlayers;
-        teamColor = Random.ColorHSV();
-        teamLayer = 9 + manager.numPlayers - 1;
+        LobbyManager lobbyManager = FindObjectOfType<LobbyManager>();
+        teamName = lobbyManager.GetLobbyPlayer((int)team).teamName;
+        teamColor = lobbyManager.GetLobbyPlayer((int)team).teamColor;
 
         RpcInitPlayer(team, teamName, teamColor, teamLayer);
         

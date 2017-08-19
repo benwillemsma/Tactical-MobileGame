@@ -29,8 +29,9 @@ public class MenuManager : MonoBehaviour
     public void LoadScene(string name)
     {
         if (NetworkServer.active)
-            manager.ServerChangeScene(name);
-        SceneManager.LoadScene(name);
+           manager.ServerChangeScene(name);
+        else
+            SceneManager.LoadScene(name);
     }
 
     public void ToggleCanvas(Canvas canvas)
@@ -46,7 +47,7 @@ public class MenuManager : MonoBehaviour
 
     public void OnSceneWasLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log(scene.name);
+        Debug.Log(scene.name + ": " + NetworkServer.connections.Count);
         if (scene.name == "MultiplayerMenu")
         {
             ipText = GameObject.Find("ipText").GetComponent<Text>();

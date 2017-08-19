@@ -30,7 +30,9 @@ public class LobbyManager : MonoBehaviour
 
         netManager = FindObjectOfType<NetworkManager>();
         SceneManager.sceneLoaded += OnSceneLoaded;
-        
+
+        connections = NetworkServer.connections.Count;
+
         for (int i = 0; i < NetworkServer.connections.Count; i++)
             AddLobbyPlayer();
     }
@@ -76,6 +78,10 @@ public class LobbyManager : MonoBehaviour
     {
         lobbyPlayers.Remove(player);
         Destroy(player.gameObject);
+    }
+    public LobbyPlayer GetLobbyPlayer(int index)
+    {
+        return lobbyPlayers[index];
     }
 
     public static Dropdown CreateColorOptions(GameObject dropDownPrefab,Transform parent)
