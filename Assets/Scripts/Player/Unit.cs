@@ -12,38 +12,39 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     public int actionsRemaining = 1;
 
     public bool hasFlag = false;
-
-    public Team Team { get { return team.team; } }
     
+    [SyncVar(hook = "InitUnit"), Space(20)]
+    public Team Team;
     public PlayerTeam team;
-    private GameObject Model;
-    
-    [SerializeField]
-    GameObject commandUI;
 
+    [Space(20)]
+    public List<Command> orders;
+    public GameObject Model;
+    public GameObject commandUI;
     public GameObject bulletPrefab;
     public GameObject grenadePrefab;
     public Transform bulletSpawn;
 
-    [Space(20)]
-    public List<Command> orders;
-
     private void Start ()
     {
+        Debug.Log("Start");
         orders = new List<Command>();
-
-        team = PlayerTeam.LocalTeam;
-        team.AddUnits(this);
-
+    }
+    public void InitUnit(Team newTeam)
+    {
+        Debug.Log("InitUnit");
         gameObject.layer = team.teamLayer;
+        transform.parent = team.transform;
+
         for (int i = 0; i < commandUI.transform.childCount; i++)
             commandUI.transform.GetChild(i).gameObject.layer = team.teamLayer;
 
-        transform.parent = team.transform;
-
         Model = transform.GetChild(1).gameObject;
         Model.GetComponent<Renderer>().material.color = team.teamColor;
+
+        team.AddUnits(this);
     }
+
     #endregion
 
     #region ISelectable
@@ -164,13 +165,13 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     [Command]
     public void CmdUnitBuisy()
     {
-        GameManager.Instance.s_unitsWithOrders[(int)team.team]++;
+        GameManager.Instance.s_unitsWithOrders++;
     }
 
     [Command]
     public void CmdUnitDone()
     {
-        GameManager.Instance.s_unitsWithOrders[(int)team.team]--;
+        GameManager.Instance.s_unitsWithOrders--;
     }
 
     [Command]

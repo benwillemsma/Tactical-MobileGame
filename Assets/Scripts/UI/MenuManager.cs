@@ -32,6 +32,7 @@ public class MenuManager : MonoBehaviour
            manager.ServerChangeScene(name);
         else
             SceneManager.LoadScene(name);
+        
     }
 
     public void ToggleCanvas(Canvas canvas)
@@ -117,7 +118,6 @@ public class MenuManager : MonoBehaviour
         {
             if (manager.matchMaker != null && manager.matchInfo == null && manager.matches == null)
             {
-                Debug.Log(ipText);
                 manager.matchMaker.CreateMatch(manager.matchName, manager.matchSize, true, "", "", ipText.text, 0, 1, manager.OnMatchCreate);
                 manager.matchName = nameText.text;
             }

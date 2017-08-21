@@ -4,18 +4,22 @@ using UnityEngine.UI;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
-public class LobbyManager : MonoBehaviour
+public class LobbyManager : NetworkBehaviour
 {
-    public static LobbyManager Instance; 
-    
+    public static LobbyManager Instance;
+
     private List<LobbyPlayer> lobbyPlayers = new List<LobbyPlayer>();
 
-    public Transform PlayerInfoPanel;
     public GameObject lobbyPlayerPrefab;
 
     public static Color[] colors = new Color[] { Color.red, Color.blue, Color.green, Color.yellow, Color.black, Color.cyan, Color.magenta };
 
     private int connections = 0;
+
+    private void Awake()
+    {
+        NetworkServer.Spawn(gameObject);
+    }
 
     private void Start()
     {
@@ -28,11 +32,6 @@ public class LobbyManager : MonoBehaviour
             Destroy(gameObject);
         
         SceneManager.sceneLoaded += OnSceneLoaded;
-
-        connections = NetworkServer.connections.Count;
-
-        for (int i = 0; i < NetworkServer.connections.Count; i++)
-            AddLobbyPlayer();
     }
 
     private void OnGUI()
@@ -44,7 +43,7 @@ public class LobbyManager : MonoBehaviour
     {
         if(connections < NetworkServer.connections.Count)
         {
-            AddLobbyPlayer();
+            CmdAddLobbyPlayer();
             connections++;
         }
     }
@@ -56,15 +55,20 @@ public class LobbyManager : MonoBehaviour
         if(scene.name == "Lobby")
         {
             for (int i = 0; i < NetworkServer.connections.Count; i++)
-                AddLobbyPlayer();
+                CmdAddLobbyPlayer();
         }
     }
 
-    public void AddLobbyPlayer()
+    [Command]
+    public void CmdAddLobbyPlayer()
     {
-        LobbyPlayer newPlayer = Instantiate(lobbyPlayerPrefab, PlayerInfoPanel).GetComponent<LobbyPlayer>();
-        newPlayer.GetComponent<RectTransform>().anchoredPosition = new Vector2(10, (-32 * (NetworkServer.connections.Count - 1)) - 10);
+        LobbyPlayer newPlayer = Instantiate(lobbyPlayerPrefab).GetComponent<LobbyPlayer>();
+
+        newPlayer.index = connections;
+        newPlayer.teamColor = colors[lobbyPlayers.Count];
         lobbyPlayers.Add(newPlayer);
+        newPlayer.teamName = "Team " + lobbyPlayers.Count;
+
         NetworkServer.Spawn(newPlayer.gameObject);
     }
     public void RemoveLobbyPlayer(int index)

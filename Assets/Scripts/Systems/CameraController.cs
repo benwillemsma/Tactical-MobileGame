@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    Camera thisCamera;
+    private Camera thisCamera;
 
     private void Start()
     {
@@ -15,7 +15,7 @@ public class CameraController : MonoBehaviour
 
     private void Update ()
     {
-        if (Input.GetButton("LeftClick") && (!PlayerTeam.LocalTeam || PlayerTeam.LocalTeam.Selection == null))
+        if (Input.GetButton("LeftClick") && (!PlayerTeam.localTeam || PlayerTeam.localTeam.Selection == null))
         {
             if (Input.touchCount > 0)
             {

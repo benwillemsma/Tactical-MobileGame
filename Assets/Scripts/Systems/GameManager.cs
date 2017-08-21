@@ -18,47 +18,42 @@ public class GameManager : NetworkBehaviour
     public static NetworkManager netManager;
     public static GameManager Instance;
 
-    public List<PlayerTeam> s_teams = new List<PlayerTeam>();
-    public List<CapturePoint> s_captures = new List<CapturePoint>();
-    public int[] s_unitsWithOrders;
-
-    // Game Specific Variables
-    public bool[] s_playerReady;
-
-    public PlayerTeam s_winner = null;
+    [SyncVar]
+    public int s_unitsWithOrders = 0;
+    [SyncVar]
+    public int s_playersReady = 0;
+    [SyncVar]
+    public int s_winner = -1;
+    [SyncVar]
     public int s_winningScore = 10;
 
+    public List<PlayerTeam> s_teams = new List<PlayerTeam>();
+    public List<CapturePoint> s_captures = new List<CapturePoint>();
     // GUI
     public Text[] scoreText = new Text[4];
 
-    private void Awake ()
+    private void Awake()
     {
-        netManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
-
         if (!Instance)
             Instance = this;
         else
             Destroy(gameObject);
-
-        if (scoreText.Length == 0)
-            scoreText = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
     }
+
     private void Start()
     {
-        if (isServer)
-        {
-            s_unitsWithOrders = new int[4];
-            s_playerReady = new bool[4];
-        }
+        netManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        if (scoreText.Length == 0)
+            scoreText = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
+
         ClientScene.AddPlayer(netManager.client.connection, 0);
     }
     private void Update()
     {
         if (Input.GetButtonDown("Exit"))
             Application.Quit();
-
-        if (isServer)
-            UpdateScoreUI();
+        
+        UpdateScoreUI();
 
     }
     private void OnGUI()
@@ -83,9 +78,8 @@ public class GameManager : NetworkBehaviour
         s_teams.Remove(Team);
     }
 
-    private void UpdateScoreUI ()
+    private void UpdateScoreUI()
     {
-
         for (int i = 0; i < s_teams.Count; i++)
         {
             scoreText[i].enabled = true;
@@ -93,40 +87,8 @@ public class GameManager : NetworkBehaviour
         }
         for (int i = s_teams.Count; i < scoreText.Length; i++)
             scoreText[i].enabled = false;
-
-        // Update clients
-        for (int i = 0; i < scoreText.Length; i++)
-            RpcUpdateScoreUI(i, scoreText[i].enabled, scoreText[i].text);
     }
-    [ClientRpc]
-    private void RpcUpdateScoreUI(int i, bool enabled,string text)
-    {
-        scoreText[i].enabled = enabled;
-        scoreText[i].text = text;
-    }
-
-    public void CheckReadyStates()
-    {
-        for (int i = 0; i < s_teams.Count; i++)
-        {
-            if (!s_playerReady[i])
-                return;
-        }
-        StartTurn();
-    }
-    public void CheckForWinner()
-    {
-        for (int i = 0; i < s_teams.Count; i++)
-        {
-            if (s_teams[i].score >= s_winningScore)
-                s_winner = s_teams[i];
-        }
-
-        if (s_winner != null)
-            EndGame();
-    }
-
-    public static RaycastHit ScreenRay(Vector3 point,LayerMask mask)
+    public static RaycastHit ScreenRay(Vector3 point, LayerMask mask)
     {
         RaycastHit hit;
         Ray ray = Camera.main.ScreenPointToRay(point);
@@ -139,6 +101,24 @@ public class GameManager : NetworkBehaviour
         Ray ray = Camera.main.ScreenPointToRay(point);
         Physics.Raycast(ray, out hit, 15, LayerMask.GetMask("Selectable"));
         return hit;
+    }
+
+    #region GameLoop
+    public void CheckReadyStates()
+    {
+        if (s_playersReady >= s_teams.Count)
+            StartTurn();
+    }
+    public void CheckForWinner()
+    {
+        for (int i = 0; i < s_teams.Count; i++)
+        {
+            if (s_teams[i].score >= s_winningScore)
+                s_winner = (int)s_teams[i].team;
+        }
+
+        if (s_winner != -1)
+            EndGame();
     }
 
     private void EndGame()
@@ -162,10 +142,8 @@ public class GameManager : NetworkBehaviour
         CheckForWinner();
 
         for (int i = 0; i < s_teams.Count; i++)
-        {
             s_teams[i].RpcToggleReady();
-            s_playerReady[i] = false;
-        }
+        s_playersReady = 0;
     }
 
     private IEnumerator WaitForUnits()
@@ -173,15 +151,10 @@ public class GameManager : NetworkBehaviour
         for (int i = 0; i < s_teams.Count; i++)
             s_teams[i].RpcInvokeCommands();
 
-        //Wait for all units to stop moving
-        while (UnitsWithOrdorsRemaining() > 0)
+        yield return new WaitForEndOfFrame();
+
+        while (s_unitsWithOrders > 0)
             yield return null;
     }
-    private int UnitsWithOrdorsRemaining()
-    {
-        int temp = 0;
-        for (int i = 0; i < s_unitsWithOrders.Length; i++)
-            temp += s_unitsWithOrders[i];
-        return temp;
-    }
+    #endregion
 }

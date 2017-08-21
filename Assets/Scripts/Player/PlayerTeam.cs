@@ -6,10 +6,11 @@ using UnityEngine.Networking;
 
 public class PlayerTeam : NetworkBehaviour
 {
-    public static PlayerTeam LocalTeam;
-
-    public Button TurnButton;
-    public GameObject UnitPrefab;
+    public static PlayerTeam localTeam;
+    [SerializeField]
+    private Button TurnButton;
+    [SerializeField]
+    private GameObject UnitPrefab;
 
     public List<Unit> units = new List<Unit>();
     public ISelectable Selection;
@@ -41,55 +42,50 @@ public class PlayerTeam : NetworkBehaviour
             GUI.Label(new Rect(100 * (int)team, y, 300, 20), "" + teamName);
             GUI.Label(new Rect(100 * (int)team + 50, y, 300, 20), "" + units.Count);
         }
-        else
-            GUI.Label(new Rect(100 * (int)team, y, 300, 20), "Error");
+    }
+
+    public override void OnStartLocalPlayer()
+    {
+        localTeam = this;
+        TurnButton = GameObject.Find("ReadyButton").GetComponent<Button>();
+        TurnButton.onClick.AddListener(delegate { PlayerReady(); });
     }
 
     #region Player initialization
     private void Start()
     {
-        showGUI = true;
-        LocalTeam = this;
-
-        if (isLocalPlayer)
-        {
-            TurnButton = GameObject.Find("ReadyButton").GetComponent<Button>();
-            TurnButton.onClick.AddListener(delegate { ToggleReady(); });
-
-            CmdInitPlayer();
-        }
-    }
-
-    [Command]
-    private void CmdInitPlayer()
-    {
-        GameManager.Instance.AddPlayer(this);
-        Debug.LogError((Team)GameManager.Instance.s_teams.IndexOf(this));
-        team = (Team)GameManager.Instance.s_teams.IndexOf(this);
-       
-        teamLayer = 9 + (int)team;
+        if(isLocalPlayer)
+            showGUI = true;
 
         LobbyManager lobbyManager = FindObjectOfType<LobbyManager>();
-        teamName = lobbyManager.GetLobbyPlayer((int)team).teamName;
-        teamColor = lobbyManager.GetLobbyPlayer((int)team).teamColor;
+        GameManager.Instance.AddPlayer(this);
 
-        RpcInitPlayer(team, teamName, teamColor, teamLayer);
-        CmdCreateUnit();
+        if (isServer)
+        {
+            team = (Team)GameManager.Instance.s_teams.IndexOf(this);
+
+            teamLayer = 9 + (int)team;
+
+            teamName = lobbyManager.GetLobbyPlayer((int)team).teamName;
+            teamColor = lobbyManager.GetLobbyPlayer((int)team).teamColor;
+
+            CmdCreateUnit();
+        }
+    }
+    [Command]
+    private void CmdCreateUnit()
+    {
+        GameObject unitObject = Instantiate(UnitPrefab, transform.position, transform.rotation);
+        NetworkServer.SpawnWithClientAuthority(unitObject, connectionToClient);
+        RpcCreateUnit(unitObject);
     }
     [ClientRpc]
-    private void RpcInitPlayer(Team team,string teamName,Color teamColor,int teamLayer)
+    private void RpcCreateUnit(GameObject unitObject)
     {
-        this.teamLayer = teamLayer;
-        this.team = team;
-        this.teamName = teamName;
-        this.teamColor = teamColor;
-    }
-
-    [Command]
-    public void CmdCreateUnit()
-    {
-        GameObject unit = Instantiate(UnitPrefab, transform.position, transform.rotation);
-        NetworkServer.SpawnWithClientAuthority(unit, connectionToClient);
+        Debug.Log("RpcCreateUnit");
+        Unit unit = unitObject.GetComponent<Unit>();
+        unit.team = this;
+        unit.Team = team;
     }
 
     private void OnDestroy()
@@ -115,20 +111,9 @@ public class PlayerTeam : NetworkBehaviour
                 tapCooldown = 0.2f;
                 CheckSelection(Input.mousePosition);
             }
-            else if
-                (Input.GetButtonDown("LeftClick") && tapCooldown > 0)
-            {
-                if(Input.touchCount > 0)
-                    CancelSelection(Input.mousePosition);
-                else
-                    CancelSelection();
-            }
-
-            else if (Input.GetButtonDown("RightClick"))
-                CancelSelection(Input.mousePosition);
 
             if (Input.GetKeyDown(KeyCode.Space))
-                ToggleReady();
+                PlayerReady();
         }
     }
     
@@ -153,26 +138,6 @@ public class PlayerTeam : NetworkBehaviour
                 Selection.Action(hit.point);
         }
     }
-
-    private void CancelSelection(Vector3 point)
-    {
-        tapCooldown = 0;
-        RaycastHit hit = GameManager.ScreenRay(point, gameObject.layer);
-        if (hit.collider != null)
-        {
-            ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
-            if (hitObject != null)
-                hitObject.Cancel();
-        }
-    }
-    private void CancelSelection()
-    {
-        tapCooldown = 0;
-        if (Selection != null)
-            Selection.Cancel();
-        Selection = null;
-    }
-
     #endregion
 
     #region Player Commands
@@ -194,27 +159,29 @@ public class PlayerTeam : NetworkBehaviour
             this.units.Remove(units[i]);
     }
 
-    public void ToggleReady()
+    public void PlayerReady()
     {
-        canInput = false;
-        TurnButton.gameObject.SetActive(false);
-        CmdIsReady();
+        canInput = !canInput;
+        TurnButton.gameObject.SetActive(canInput);
+
+        CmdPlayerReady();
     }
-    [Command]
-    public void CmdIsReady()
-    {
-        if (GameManager.Instance)
-        {
-            GameManager.Instance.s_playerReady[(int)team] = true;
-            GameManager.Instance.CheckReadyStates();
-        }
-    }
+
     [ClientRpc]
     public void RpcToggleReady()
     {
-        canInput = true;
         if (isLocalPlayer)
-            TurnButton.gameObject.SetActive(true);
+        {
+            canInput = !canInput;
+            TurnButton.gameObject.SetActive(canInput);
+        }
+    }
+
+    [Command]
+    public void CmdPlayerReady()
+    {
+        GameManager.Instance.s_playersReady++;
+        GameManager.Instance.CheckReadyStates();
     }
     #endregion
 }
