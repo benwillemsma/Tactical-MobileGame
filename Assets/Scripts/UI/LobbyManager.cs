@@ -7,19 +7,20 @@ using UnityEngine.SceneManagement;
 public class LobbyManager : NetworkBehaviour
 {
     public static LobbyManager Instance;
+    public static NetworkManager netManager;
 
     private List<LobbyPlayer> lobbyPlayers = new List<LobbyPlayer>();
 
     public GameObject lobbyPlayerPrefab;
+    public GameObject gamePlayerPrefab;
 
     public static Color[] colors = new Color[] { Color.red, Color.blue, Color.green, Color.yellow, Color.black, Color.cyan, Color.magenta };
 
+    [SyncVar]
     private int connections = 0;
-
-    private void Awake()
-    {
-        NetworkServer.Spawn(gameObject);
-    }
+    [SyncVar]
+    private int playersReady = 0;
+    private bool localIsReady = false;
 
     private void Start()
     {
@@ -30,18 +31,23 @@ public class LobbyManager : NetworkBehaviour
         }
         else
             Destroy(gameObject);
-        
+
+        netManager = FindObjectOfType<NetworkManager>();
+
         SceneManager.sceneLoaded += OnSceneLoaded;
+
+        for (int i = 0; i < connections; i++)
+            CmdAddLobbyPlayer();
     }
 
     private void OnGUI()
     {
-        GUI.Label(new Rect(5, 20, 100, 20), "" + NetworkServer.connections.Count);
+        GUI.Label(new Rect(510, 0, 300, 20), "Address: " + netManager.networkAddress + " | Connections: " + NetworkServer.connections.Count);
     }
 
     private void Update()
     {
-        if(connections < NetworkServer.connections.Count)
+        if (connections < NetworkServer.connections.Count)
         {
             CmdAddLobbyPlayer();
             connections++;
@@ -54,7 +60,7 @@ public class LobbyManager : NetworkBehaviour
             Destroy(gameObject);
         if(scene.name == "Lobby")
         {
-            for (int i = 0; i < NetworkServer.connections.Count; i++)
+            for (int i = 0; i < connections; i++)
                 CmdAddLobbyPlayer();
         }
     }
@@ -70,6 +76,7 @@ public class LobbyManager : NetworkBehaviour
         newPlayer.teamName = "Team " + lobbyPlayers.Count;
 
         NetworkServer.Spawn(newPlayer.gameObject);
+        //NetworkServer.SpawnWithClientAuthority(newPlayer.gameObject, netManager.client.connection);
     }
     public void RemoveLobbyPlayer(int index)
     {
@@ -108,5 +115,30 @@ public class LobbyManager : NetworkBehaviour
         }
         dropdown.name = "ColorOptions";
         return dropdown;
+    }
+    [Command]
+    public void CmdToggleReady()
+    {
+        netManager.ServerChangeScene("Game");
+
+        //localIsReady = !localIsReady;
+        //if (localIsReady)
+        //    playersReady++;
+        //else playersReady--;
+
+        //Debug.Log(playersReady);
+
+        //if (playersReady > 1)
+        //{
+        //    if (playersReady == connections)
+        //        netManager.ServerChangeScene("Game");
+        //}
+        //else
+        //{
+        //    localIsReady = false;
+        //    playersReady--;
+        //}
+
+        //checkmark
     }
 }

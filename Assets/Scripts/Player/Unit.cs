@@ -27,12 +27,10 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
 
     private void Start ()
     {
-        Debug.Log("Start");
         orders = new List<Command>();
     }
     public void InitUnit(Team newTeam)
     {
-        Debug.Log("InitUnit");
         gameObject.layer = team.teamLayer;
         transform.parent = team.transform;
 

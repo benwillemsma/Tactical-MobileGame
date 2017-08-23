@@ -35,7 +35,7 @@ public class PlayerTeam : NetworkBehaviour
 
     private void OnGUI()
     {
-        int y = 2;
+        int y = -1;
         GUI.color = teamColor;
         if (showGUI)
         {

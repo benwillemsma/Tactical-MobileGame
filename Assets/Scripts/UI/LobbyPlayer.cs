@@ -6,9 +6,6 @@ using UnityEngine.Networking;
 
 public class LobbyPlayer : NetworkBehaviour
 {
-    private NetworkManager netManager;
-    private LobbyManager lobbyManager;
-
     private GameObject PlayerInfoPanel;
     [SerializeField]
     private Dropdown colorOptionsPrefab;
@@ -24,13 +21,15 @@ public class LobbyPlayer : NetworkBehaviour
 
     private Dropdown colorOptions;
 
-    private void Start()
+    private IEnumerator Start()
     {
-        netManager = FindObjectOfType<NetworkManager>();
-        lobbyManager = FindObjectOfType<LobbyManager>();
-
-        PlayerInfoPanel = GameObject.FindGameObjectWithTag("PlayerInfoPanel");
+        while (PlayerInfoPanel == null)
+        {
+            PlayerInfoPanel = GameObject.FindGameObjectWithTag("PlayerInfoPanel");
+            yield return null;
+        }
         transform.SetParent(PlayerInfoPanel.transform);
+
         RectTransform rect = GetComponent<RectTransform>();
         rect.anchoredPosition = new Vector2(10, ((index * -32) - 10));
         rect.sizeDelta = new Vector3(-260, 30);
@@ -38,8 +37,8 @@ public class LobbyPlayer : NetworkBehaviour
         colorOptions = LobbyManager.CreateColorOptions(colorOptionsPrefab.gameObject, transform);
         colorOptions.onValueChanged.AddListener(delegate { CmdChangeColor(); });
 
-        Button turnButton = GameObject.Find("ReadyButton").GetComponent<Button>();
-        turnButton.onClick.AddListener(delegate { ClientScene.Ready(netManager.client.connection); });
+        Button readyButton = GameObject.Find("ReadyButton").GetComponent<Button>();
+        readyButton.onClick.AddListener(delegate { LobbyManager.Instance.CmdToggleReady(); });
 
         nameInput.text = teamName;
         for (int i = 0; i < LobbyManager.colors.Length; i++)
@@ -47,7 +46,7 @@ public class LobbyPlayer : NetworkBehaviour
             if (teamColor == LobbyManager.colors[i])
             {
                 colorOptions.value = i;
-                return;
+                break;
             }
         }
         teamColor = LobbyManager.colors[colorOptions.value];
@@ -60,7 +59,7 @@ public class LobbyPlayer : NetworkBehaviour
     }
     public void ChangeName(string newName)
     {
-        if(nameInput)
+        if (nameInput)
             nameInput.text = newName;
     }
 

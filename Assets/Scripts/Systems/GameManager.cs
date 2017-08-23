@@ -59,7 +59,7 @@ public class GameManager : NetworkBehaviour
     private void OnGUI()
     {
         GUI.color = Color.gray;
-        GUI.Label(new Rect(550, 0, 300, 20), "GameManager: " + s_teams.Count);
+        GUI.Label(new Rect(550, 20, 300, 20), "GameManager: " + s_teams.Count);
         for (int i = 0; i < s_teams.Count; i++)
         {
             int y = 0;
