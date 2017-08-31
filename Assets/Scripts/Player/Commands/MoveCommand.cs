@@ -22,7 +22,7 @@ public class MoveCommand : Command
     {
         if (unit == null)
         {
-            Destroy(gameObject);
+            Remove();
             return;
         }
         base.Update();
@@ -38,13 +38,6 @@ public class MoveCommand : Command
             if (i != 0 && moves[i - 1])
             {
                 availableMove = moves[i - 1].remainingMove;
-                if (availableMove < 0.1f)
-                {
-                    Deselected();
-                    Remove();
-                    unit.ToggleCommands(true);
-                    break;
-                }
 
                 start = moves[i - 1].transform.position;
                 direction = start - transform.position;
@@ -56,12 +49,17 @@ public class MoveCommand : Command
             }
             else
             {
-                remainingMove = unit.maxMoveDistance - direction.magnitude;
                 visualMarkers[0].localScale = Vector3.one * unit.maxMoveDistance;
                 direction = Vector3.ClampMagnitude(direction, unit.maxMoveDistance);
+                remainingMove = unit.maxMoveDistance - direction.magnitude;
                 transform.position = start - direction;
             }
-            LineFromTo(start, transform.position, Mathf.RoundToInt(direction.magnitude), visualMarkers[1]);
+            if (availableMove < 0.2f)
+            {
+                Remove();
+                break;
+            }
+            LineFromTo(start, transform.position, visualMarkers[1]);
             visualMarkers[0].position = start + groundOffset;
         }
 	}

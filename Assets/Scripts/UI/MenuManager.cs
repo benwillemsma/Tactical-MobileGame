@@ -154,5 +154,5 @@ public class MenuManager : MonoBehaviour
             }
         }
     }
-#endif //ENABLE_UNET
+#endif
 }

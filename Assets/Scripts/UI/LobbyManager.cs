@@ -18,9 +18,9 @@ public class LobbyManager : NetworkBehaviour
 
     [SyncVar]
     private int connections = 0;
-    [SyncVar]
-    private int playersReady = 0;
-    private bool localIsReady = false;
+    //[SyncVar]
+    //private int playersReady = 0;
+    //private bool localIsReady = false;
 
     private void Start()
     {

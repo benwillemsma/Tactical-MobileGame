@@ -19,15 +19,17 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
 
     [Space(20)]
     public List<Command> orders;
-    public GameObject Model;
-    public GameObject commandUI;
-    public GameObject bulletPrefab;
-    public GameObject grenadePrefab;
-    public Transform bulletSpawn;
+
+    private GameObject Model;
+    private GameObject commandUI;
+    private Transform objectSpawn;
 
     private void Start ()
     {
         orders = new List<Command>();
+        commandUI = transform.GetChild(0).gameObject;
+        Model = transform.GetChild(1).gameObject;
+        objectSpawn = Model.transform.GetChild(0);
     }
     public void InitUnit(Team newTeam)
     {
@@ -36,8 +38,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
 
         for (int i = 0; i < commandUI.transform.childCount; i++)
             commandUI.transform.GetChild(i).gameObject.layer = team.teamLayer;
-
-        Model = transform.GetChild(1).gameObject;
+        
         Model.GetComponent<Renderer>().material.color = team.teamColor;
 
         team.AddUnits(this);
@@ -115,10 +116,16 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
                         yield return Move(orders[0].transform.position);
                         break;
                     case CommandType.Shoot:
-                        yield return Shoot(orders[0].transform.position - transform.position);
+                        yield return Shoot(orders[0].spawnObject, orders[0].transform.position - transform.position);
                         break;
                     case CommandType.Grenade:
-                        yield return Grenade(orders[0].transform.position - transform.position);
+                        yield return Grenade(orders[0].spawnObject, orders[0].transform.position - transform.position);
+                        break;
+                    case CommandType.Rocket:
+                        yield return Rocket(orders[0].spawnObject, (orders[0] as RocketCommand).blank.transform.position - transform.position, orders[0]);
+                        break;
+                    case CommandType.Melee:
+                        yield return Melee(orders[0].spawnObject,orders[0].transform.position - transform.position);
                         break;
                     default:
                         Debug.Log("Command No Implimented:" + orders[0].type);
@@ -129,35 +136,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
             }
             CmdUnitDone();
         }
-        actionsRemaining = 1;
-    }
-
-    public IEnumerator Move(Vector3 destination)
-    {
-        transform.LookAt(destination);
-        Vector3 startPos = transform.position;
-
-        while ((transform.position - destination).magnitude > 0.1f)
-        {
-            transform.position = Vector3.MoveTowards(transform.position, destination, Time.deltaTime * speed);
-            yield return null;
-        }
-    }
-
-    public IEnumerator Shoot(Vector3 direction)
-    {
-        transform.LookAt(transform.position + direction);
-        yield return new WaitForSeconds(0.2f);
-        CmdShoot(direction);
-        yield return new WaitForSeconds(0.2f);
-    }
-
-    public IEnumerator Grenade(Vector3 direction)
-    {
-        transform.LookAt(transform.position + direction);
-        yield return new WaitForSeconds(0.2f);
-        CmdGrenade(direction);
-        yield return new WaitForSeconds(0.2f);
+        actionsRemaining = 2;
     }
 
     [Command]
@@ -172,16 +151,62 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         GameManager.Instance.s_unitsWithOrders--;
     }
 
-    [Command]
-    public void CmdShoot(Vector3 direction)
+    public IEnumerator Move(Vector3 destination)
     {
-        NetworkServer.Spawn(Instantiate(bulletPrefab, bulletSpawn.position, Quaternion.LookRotation(direction)));
+        transform.LookAt(destination);
+        Vector3 startPos = transform.position;
+
+        while ((transform.position - destination).magnitude > 0.1f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, destination, Time.deltaTime * speed);
+            yield return null;
+        }
+    }
+
+    public IEnumerator Shoot(GameObject spawnObject, Vector3 direction)
+    {
+        transform.LookAt(transform.position + direction);
+        yield return new WaitForSeconds(0.2f);
+        CmdSpawnObject(spawnObject);
+        yield return new WaitForSeconds(0.2f);
+    }
+
+    public IEnumerator Grenade(GameObject spawnObject, Vector3 direction)
+    {
+        transform.LookAt(transform.position + direction);
+        yield return new WaitForSeconds(0.2f);
+        CmdSpawnObject(spawnObject);
+        yield return new WaitForSeconds(0.2f);
+    }
+
+    public IEnumerator Rocket(GameObject spawnObject, Vector3 direction,Command rocketCmd)
+    {
+        transform.LookAt(transform.position + direction);
+        yield return new WaitForSeconds(0.2f);
+        CmdSpawnRocket(spawnObject, (rocketCmd as RocketCommand).blank.transform.position, rocketCmd.transform.position);
+        yield return new WaitForSeconds(0.2f);
+    }
+
+    public IEnumerator Melee(GameObject spawnObject, Vector3 direction)
+    {
+        transform.LookAt(transform.position + direction);
+        yield return new WaitForSeconds(0.2f);
+        CmdSpawnObject(spawnObject);
+        yield return new WaitForSeconds(0.2f);
     }
 
     [Command]
-    public void CmdGrenade(Vector3 direction)
+    public void CmdSpawnObject(GameObject spawnObject)
     {
-        NetworkServer.Spawn(Instantiate(grenadePrefab, bulletSpawn.position, Quaternion.LookRotation(direction + Vector3.up * 4)));
+        NetworkServer.Spawn(Instantiate(spawnObject, objectSpawn.position, objectSpawn.rotation));
+    }
+
+    [Command]
+    public void CmdSpawnRocket(GameObject spawnObject,params Vector3[] guidePoints)
+    {
+        GameObject temp = Instantiate(spawnObject, objectSpawn.position, objectSpawn.rotation);
+        temp.GetComponent<Rocket>().guidePoints = guidePoints;
+        NetworkServer.Spawn(temp);
     }
     #endregion
 }

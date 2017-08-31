@@ -7,10 +7,9 @@ using UnityEngine.Networking;
 public class PlayerTeam : NetworkBehaviour
 {
     public static PlayerTeam localTeam;
-    [SerializeField]
     private Button TurnButton;
     [SerializeField]
-    private GameObject UnitPrefab;
+    private GameObject[] UnitPrefabs;
 
     public List<Unit> units = new List<Unit>();
     public ISelectable Selection;
@@ -75,14 +74,13 @@ public class PlayerTeam : NetworkBehaviour
     [Command]
     private void CmdCreateUnit()
     {
-        GameObject unitObject = Instantiate(UnitPrefab, transform.position, transform.rotation);
+        GameObject unitObject = Instantiate(UnitPrefabs[0], transform.position, transform.rotation);
         NetworkServer.SpawnWithClientAuthority(unitObject, connectionToClient);
         RpcCreateUnit(unitObject);
     }
     [ClientRpc]
     private void RpcCreateUnit(GameObject unitObject)
     {
-        Debug.Log("RpcCreateUnit");
         Unit unit = unitObject.GetComponent<Unit>();
         unit.team = this;
         unit.Team = team;
@@ -98,6 +96,7 @@ public class PlayerTeam : NetworkBehaviour
     #region Player Selection/Controls
     private void Update()
     {
+
         if (tapCooldown > 0)
             tapCooldown -= Time.deltaTime;
 
@@ -126,7 +125,7 @@ public class PlayerTeam : NetworkBehaviour
 
             if (hitObject != null)
             {
-                if (Selection != null)
+                if (Selection != null && !Selection.Equals(null))
                 {
                     Selection.Action(hit.point);
                     hitObject.Selected();
@@ -134,7 +133,7 @@ public class PlayerTeam : NetworkBehaviour
                 else if (hitObject != Selection)
                     hitObject.Selected();
             }
-            else if (Selection != null)
+            else if (Selection != null && !Selection.Equals(null))
                 Selection.Action(hit.point);
         }
     }

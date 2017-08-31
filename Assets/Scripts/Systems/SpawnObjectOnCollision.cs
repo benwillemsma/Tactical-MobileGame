@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SpawnObjectOnDestroy : MonoBehaviour
+public class SpawnObjectOnCollision : MonoBehaviour
 {
     public GameObject Prefab;
     public float ObjectLifeTime = -1;
 
-    void OnDestroy()
+    private void OnCollisionEnter(Collision collision)
     {
-        GameObject temp =  Instantiate(Prefab, transform.position, transform.rotation);
+        GameObject temp = Instantiate(Prefab, transform.position, transform.rotation);
         if (ObjectLifeTime > 0)
             Destroy(temp, ObjectLifeTime);
     }
