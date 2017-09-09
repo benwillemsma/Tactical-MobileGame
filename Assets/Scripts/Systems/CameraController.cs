@@ -30,13 +30,21 @@ public class CameraController : MonoBehaviour
             if (Input.GetTouch(0).phase == TouchPhase.Moved && Input.GetTouch(1).phase == TouchPhase.Moved)
             {
                 if (Vector2.Distance(Input.GetTouch(0).position, Input.GetTouch(1).position) > Vector2.Distance(Input.GetTouch(0).position - Input.GetTouch(0).deltaPosition, Input.GetTouch(1).position))
-                    thisCamera.orthographicSize += (Input.GetTouch(0).deltaPosition.magnitude + Input.GetTouch(1).deltaPosition.magnitude) * Time.deltaTime;
+                    thisCamera.orthographicSize =
+                        Mathf.Clamp(thisCamera.orthographicSize 
+                        + (Input.GetTouch(0).deltaPosition.magnitude 
+                        + Input.GetTouch(1).deltaPosition.magnitude) 
+                        * Time.deltaTime, 
+                        4, 20);
                 else
-                    thisCamera.orthographicSize -= (Input.GetTouch(0).deltaPosition.magnitude + Input.GetTouch(1).deltaPosition.magnitude) * Time.deltaTime;
+                    thisCamera.orthographicSize = 
+                        Mathf.Clamp(thisCamera.orthographicSize 
+                        - (Input.GetTouch(0).deltaPosition.magnitude 
+                        + Input.GetTouch(1).deltaPosition.magnitude) 
+                        * Time.deltaTime,
+                        4, 20);
             }
         }
-        else thisCamera.orthographicSize -= Input.GetAxis("Mouse ScrollWheel") * 2;
-
-        Mathf.Clamp(thisCamera.orthographicSize, 5, 25);
+        else thisCamera.orthographicSize = Mathf.Clamp(thisCamera.orthographicSize - Input.GetAxis("Mouse ScrollWheel") * 2, 4, 20);
     }
 }

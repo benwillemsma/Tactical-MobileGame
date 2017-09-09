@@ -1,11 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Networking;
 
 public class Unit : NetworkBehaviour, ISelectable,IDamageable
 {
     # region Initilization
+    private NavMeshAgent agent;
+    public NavMeshAgent Pathfinding { get { return agent; } }
+
     public float speed;
     public float health;
     public float maxMoveDistance;
@@ -26,6 +30,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
 
     private void Start ()
     {
+        agent = GetComponent<NavMeshAgent>();
         orders = new List<Command>();
         commandUI = transform.GetChild(0).gameObject;
         Model = transform.GetChild(1).gameObject;
@@ -42,6 +47,13 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         Model.GetComponent<Renderer>().material.color = team.teamColor;
 
         team.AddUnits(this);
+    }
+
+    public void AddOrder(Command newCommand,int index = -1)
+    {
+        if (index == -1)
+            orders.Add(newCommand);
+        else orders.Insert(index, newCommand);
     }
 
     #endregion
@@ -122,7 +134,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
                         yield return Grenade(orders[0].spawnObject, orders[0].transform.position - transform.position);
                         break;
                     case CommandType.Rocket:
-                        yield return Rocket(orders[0].spawnObject, (orders[0] as RocketCommand).blank.transform.position - transform.position, orders[0]);
+                        yield return Rocket(orders[0].spawnObject, (orders[0] as RocketCommand).blankCommand.transform.position - transform.position, orders[0]);
                         break;
                     case CommandType.Melee:
                         yield return Melee(orders[0].spawnObject,orders[0].transform.position - transform.position);
@@ -183,7 +195,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        CmdSpawnRocket(spawnObject, (rocketCmd as RocketCommand).blank.transform.position, rocketCmd.transform.position);
+        CmdSpawnRocket(spawnObject, (rocketCmd as RocketCommand).blankCommand.transform.position, rocketCmd.transform.position);
         yield return new WaitForSeconds(0.2f);
     }
 

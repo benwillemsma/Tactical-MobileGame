@@ -18,7 +18,7 @@ public class Command : MoveableObject
 
     public Unit unit;
 
-    public static GameObject blankCommand;
+    public MoveableObject blankCommand;
     public GameObject spawnObject;
     public Transform[] visualMarkers;
 
@@ -29,7 +29,6 @@ public class Command : MoveableObject
     {
         normalLayer = unit.gameObject.layer;
         unit.actionsRemaining -= actionPoints;
-        unit.orders.Add(this);
     }
     protected override void Update()
     {
