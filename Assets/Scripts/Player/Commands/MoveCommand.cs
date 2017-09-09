@@ -63,7 +63,6 @@ public class MoveCommand : Command
 
     public override void Remove()
     {
-
         base.Remove();
     }
 
@@ -83,9 +82,10 @@ public class MoveCommand : Command
 
     private Vector3 ClosestPointOnNavmesh(Vector3 start,Vector3 direction)
     {
+        LayerMask mask = LayerMask.GetMask("Level");
         Vector3 point = start - direction;
         RaycastHit rayHit;
-        if (Physics.Raycast(start + Vector3.up, -direction + Vector3.up, out rayHit, direction.magnitude))
+        if (Physics.SphereCast(start + Vector3.up, 0.3f, -direction + Vector3.up, out rayHit, direction.magnitude, mask))
             return rayHit.point;
 
         NavMeshHit meshHit;

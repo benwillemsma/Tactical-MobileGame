@@ -15,6 +15,7 @@ public enum Team
 
 public class GameManager : NetworkBehaviour
 {
+    #region Initilization
     public static NetworkManager netManager;
     public static GameManager Instance;
 
@@ -27,10 +28,15 @@ public class GameManager : NetworkBehaviour
     [SyncVar]
     public int s_winningScore = 10;
 
+    public float timerAmount;
+
     public List<PlayerTeam> s_teams = new List<PlayerTeam>();
     public List<CapturePoint> s_captures = new List<CapturePoint>();
+    
     // GUI
-    public Text[] scoreText = new Text[4];
+    private Text[] scoreText;
+    private Text timerText;
+    private float turnTimer = 30;
 
     private void Awake()
     {
@@ -43,8 +49,10 @@ public class GameManager : NetworkBehaviour
     private void Start()
     {
         netManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
-        if (scoreText.Length == 0)
+        if (scoreText == null)
             scoreText = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
+        if (timerText == null)
+            timerText = GameObject.Find("TurnTimer").GetComponent<Text>();
 
         ClientScene.AddPlayer(netManager.client.connection, 0);
     }
@@ -52,9 +60,20 @@ public class GameManager : NetworkBehaviour
     {
         if (Input.GetButtonDown("Exit"))
             Application.Quit();
-        
-        UpdateScoreUI();
 
+        if (turnTimer > 0)
+            turnTimer -= Time.deltaTime;
+        else if (turnTimer < 0)
+        {
+            turnTimer = 0;
+            for (int i = 0; i < s_teams.Count; i++)
+            {
+                s_teams[i].RpcToggleReady();
+                s_teams[i].CmdPlayerReady();
+            }
+        }
+
+        UpdateUI();
     }
     private void OnGUI()
     {
@@ -68,7 +87,9 @@ public class GameManager : NetworkBehaviour
             y += 20;
         }
     }
+    #endregion
 
+    #region HelperFunctions
     public void AddPlayer(PlayerTeam newTeam)
     {
         s_teams.Add(newTeam);
@@ -78,8 +99,9 @@ public class GameManager : NetworkBehaviour
         s_teams.Remove(Team);
     }
 
-    private void UpdateScoreUI()
+    private void UpdateUI()
     {
+        timerText.text = "" + (int)turnTimer;
         for (int i = 0; i < s_teams.Count; i++)
         {
             scoreText[i].enabled = true;
@@ -102,6 +124,7 @@ public class GameManager : NetworkBehaviour
         Physics.Raycast(ray, out hit, 15, LayerMask.GetMask("Selectable"));
         return hit;
     }
+    #endregion
 
     #region GameLoop
     public void CheckReadyStates()
@@ -109,6 +132,7 @@ public class GameManager : NetworkBehaviour
         if (s_playersReady >= s_teams.Count)
             StartTurn();
     }
+
     public void CheckForWinner()
     {
         for (int i = 0; i < s_teams.Count; i++)
@@ -125,15 +149,18 @@ public class GameManager : NetworkBehaviour
     {
 
     }
+
     public void StartTurn()
     {
         StartCoroutine(RunTurn());
     }
+
     private IEnumerator RunTurn()
     {
         yield return WaitForUnits();
         Endturn();
     }
+
     private void Endturn()
     {
         for (int i = 0; i < s_captures.Count; i++)
@@ -144,6 +171,7 @@ public class GameManager : NetworkBehaviour
         for (int i = 0; i < s_teams.Count; i++)
             s_teams[i].RpcToggleReady();
         s_playersReady = 0;
+        turnTimer = timerAmount;
     }
 
     private IEnumerator WaitForUnits()
