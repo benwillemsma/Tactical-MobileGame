@@ -42,7 +42,8 @@ public class LobbyManager : NetworkBehaviour
 
     private void OnGUI()
     {
-        GUI.Label(new Rect(510, 0, 300, 20), "Address: " + netManager.networkAddress + " | Connections: " + NetworkServer.connections.Count);
+        if(Debug.isDebugBuild)
+            GUI.Label(new Rect(510, 0, 300, 20), "Address: " + netManager.networkAddress + " | Connections: " + NetworkServer.connections.Count);
     }
 
     private void Update()

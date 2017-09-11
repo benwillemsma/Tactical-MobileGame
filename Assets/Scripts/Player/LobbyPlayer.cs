@@ -31,7 +31,10 @@ public class LobbyPlayer : NetworkBehaviour
         transform.SetParent(PlayerInfoPanel.transform);
 
         RectTransform rect = GetComponent<RectTransform>();
+        rect.localPosition = new Vector3(0, 0, 0);
+        rect.localRotation = Quaternion.identity;
         rect.anchoredPosition = new Vector2(10, ((index * -32) - 10));
+        rect.localScale = new Vector3(1, 1, 1);
         rect.sizeDelta = new Vector3(-260, 30);
 
         colorOptions = LobbyManager.CreateColorOptions(colorOptionsPrefab.gameObject, transform);

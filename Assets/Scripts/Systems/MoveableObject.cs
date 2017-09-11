@@ -32,6 +32,7 @@ public class MoveableObject : MonoBehaviour, ISelectable
     }
     public virtual void Deselected()
     {
+        PlayerTeam.localTeam.Selection = null;
         gameObject.layer = normalLayer;
         selected = false;
     }

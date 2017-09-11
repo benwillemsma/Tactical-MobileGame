@@ -6,19 +6,25 @@ using UnityEngine.Networking.Match;
 
 public class MenuManager : MonoBehaviour
 {
-    public static MenuManager SM_Instance;
+    public static MenuManager Instance;
     public static NetworkManager manager;
     public Canvas[] subCanvases;
 
     public Text AddressText;
     public Text nameText;
-    public int matchIndex;
+    private int matchIndex;
 
-    private void Start()
+    public static bool training = false;
+    public bool Training
     {
-        if (!SM_Instance)
-            SM_Instance = this;
-        else Destroy(gameObject);
+        get { return training; }
+        set { training = value; }
+    }
+
+    private void Start()    
+    {
+        if (!Instance)
+            Instance = this;
 
         if (!manager)
         {
@@ -32,6 +38,11 @@ public class MenuManager : MonoBehaviour
             nameText = GameObject.Find("nameText").GetComponent<Text>();
             SetNetworkAddress();
         }
+    }
+
+    public void Quit()
+    {
+        Application.Quit();
     }
 
     public void LoadScene(string name)
@@ -56,15 +67,6 @@ public class MenuManager : MonoBehaviour
     public void OnSceneWasLoaded(Scene scene, LoadSceneMode mode)
     {
         Debug.Log(scene.name + ": " + NetworkServer.connections.Count);
-        if (scene.name == "MultiplayerMenu")
-        {
-            AddressText = GameObject.Find("ipText").GetComponent<Text>();
-            nameText = GameObject.Find("nameText").GetComponent<Text>();
-            SetNetworkAddress();
-
-            if (!AddressText || !nameText)
-                Debug.Log("shit broke");
-        }
     }
 
 #if ENABLE_UNET
@@ -78,7 +80,8 @@ public class MenuManager : MonoBehaviour
     {
         if (!NetworkClient.active && !NetworkServer.active)
         {
-            manager.networkAddress = AddressText.text;
+            if(AddressText)
+                manager.networkAddress = AddressText.text;
             manager.StartHost();
         }
     }

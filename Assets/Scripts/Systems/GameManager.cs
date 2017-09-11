@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using System.Collections;
 using UnityEngine.UI;
 
@@ -56,35 +57,20 @@ public class GameManager : NetworkBehaviour
 
         ClientScene.AddPlayer(netManager.client.connection, 0);
     }
-    private void Update()
-    {
-        if (Input.GetButtonDown("Exit"))
-            Application.Quit();
-
-        if (turnTimer > 0)
-            turnTimer -= Time.deltaTime;
-        else if (turnTimer < 0)
-        {
-            turnTimer = 0;
-            for (int i = 0; i < s_teams.Count; i++)
-            {
-                s_teams[i].RpcToggleReady();
-                s_teams[i].CmdPlayerReady();
-            }
-        }
-
-        UpdateUI();
-    }
+    
     private void OnGUI()
     {
-        GUI.color = Color.gray;
-        GUI.Label(new Rect(550, 20, 300, 20), "GameManager: " + s_teams.Count);
-        for (int i = 0; i < s_teams.Count; i++)
+        if (Debug.isDebugBuild)
         {
-            int y = 0;
-            GUI.Label(new Rect(100 * (int)s_teams[i].team, y, 300, 20), "" + s_teams[i].teamName);
-            GUI.Label(new Rect(100 * (int)s_teams[i].team + 50, y, 300, 20), "" + s_teams[i].units.Count);
-            y += 20;
+            GUI.color = Color.gray;
+            GUI.Label(new Rect(550, 20, 300, 20), "GameManager: " + s_teams.Count);
+            for (int i = 0; i < s_teams.Count; i++)
+            {
+                int y = 0;
+                GUI.Label(new Rect(100 * (int)s_teams[i].team, y, 300, 20), "" + s_teams[i].teamName);
+                GUI.Label(new Rect(100 * (int)s_teams[i].team + 50, y, 300, 20), "" + s_teams[i].units.Count);
+                y += 20;
+            }
         }
     }
     #endregion
@@ -98,18 +84,7 @@ public class GameManager : NetworkBehaviour
     {
         s_teams.Remove(Team);
     }
-
-    private void UpdateUI()
-    {
-        timerText.text = "" + (int)turnTimer;
-        for (int i = 0; i < s_teams.Count; i++)
-        {
-            scoreText[i].enabled = true;
-            scoreText[i].text = s_teams[i].teamName + ": " + s_teams[i].score;
-        }
-        for (int i = s_teams.Count; i < scoreText.Length; i++)
-            scoreText[i].enabled = false;
-    }
+    
     public static RaycastHit ScreenRay(Vector3 point, LayerMask mask)
     {
         RaycastHit hit;
@@ -127,6 +102,52 @@ public class GameManager : NetworkBehaviour
     #endregion
 
     #region GameLoop
+    private void Update()
+    {
+        if (Input.GetButtonDown("Pause"))
+            TogglePause();
+
+        if (!MenuManager.training)
+        {
+            if (turnTimer > 0)
+                turnTimer -= Time.deltaTime;
+            else if (turnTimer < 0)
+            {
+                turnTimer = 0;
+                for (int i = 0; i < s_teams.Count; i++)
+                {
+                    s_teams[i].RpcToggleReady();
+                    s_teams[i].CmdPlayerReady();
+                }
+            }
+            UpdateUI();
+        }
+    }
+
+    public void TogglePause()
+    {
+        string pause = "Pause";
+        if (SceneManager.GetSceneByName(pause).isLoaded)
+            SceneManager.UnloadSceneAsync(pause);
+        else
+            SceneManager.LoadScene(pause, LoadSceneMode.Additive);
+    }
+
+    private void UpdateUI()
+    {
+        if (!MenuManager.training)
+        {
+            timerText.text = "" + (int)turnTimer;
+            for (int i = 0; i < s_teams.Count; i++)
+            {
+                scoreText[i].enabled = true;
+                scoreText[i].text = s_teams[i].teamName + ": " + s_teams[i].score;
+            }
+            for (int i = s_teams.Count; i < scoreText.Length; i++)
+                scoreText[i].enabled = false;
+        }
+    }
+
     public void CheckReadyStates()
     {
         if (s_playersReady >= s_teams.Count)

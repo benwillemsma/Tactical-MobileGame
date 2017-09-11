@@ -16,6 +16,7 @@ public class CommandUI : MonoBehaviour, ISelectable
         {
             Command tempCmd = Instantiate(commandPrefab, unit.transform.position, Quaternion.identity, GameObject.Find("Commands").transform).GetComponent<Command>();
             unit.AddOrder(tempCmd);
+            unit.ToggleCommands(false);
             tempCmd.unit = unit;
             tempCmd.Selected();
         }
