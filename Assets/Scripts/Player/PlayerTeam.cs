@@ -34,16 +34,16 @@ public class PlayerTeam : NetworkBehaviour
 
     private void OnGUI()
     {
-        if (Debug.isDebugBuild)
-        {
-            int y = -1;
-            GUI.color = teamColor;
-            if (showGUI)
-            {
-                GUI.Label(new Rect(100 * (int)team, y, 300, 20), "" + teamName);
-                GUI.Label(new Rect(100 * (int)team + 50, y, 300, 20), "" + units.Count);
-            }
-        }
+        //if (Debug.isDebugBuild)
+        //{
+        //    int y = -1;
+        //    GUI.color = teamColor;
+        //    if (showGUI)
+        //    {
+        //        GUI.Label(new Rect(100 * (int)team, y, 300, 20), "" + teamName);
+        //        GUI.Label(new Rect(100 * (int)team + 50, y, 300, 20), "" + units.Count);
+        //    }
+        //}
     }
 
     public override void OnStartLocalPlayer()

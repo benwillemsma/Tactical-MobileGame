@@ -60,18 +60,18 @@ public class GameManager : NetworkBehaviour
     
     private void OnGUI()
     {
-        if (Debug.isDebugBuild)
-        {
-            GUI.color = Color.gray;
-            GUI.Label(new Rect(550, 20, 300, 20), "GameManager: " + s_teams.Count);
-            for (int i = 0; i < s_teams.Count; i++)
-            {
-                int y = 0;
-                GUI.Label(new Rect(100 * (int)s_teams[i].team, y, 300, 20), "" + s_teams[i].teamName);
-                GUI.Label(new Rect(100 * (int)s_teams[i].team + 50, y, 300, 20), "" + s_teams[i].units.Count);
-                y += 20;
-            }
-        }
+        //if (Debug.isDebugBuild)
+        //{
+        //    GUI.color = Color.gray;
+        //    GUI.Label(new Rect(550, 20, 300, 20), "GameManager: " + s_teams.Count);
+        //    for (int i = 0; i < s_teams.Count; i++)
+        //    {
+        //        int y = 0;
+        //        GUI.Label(new Rect(100 * (int)s_teams[i].team, y, 300, 20), "" + s_teams[i].teamName);
+        //        GUI.Label(new Rect(100 * (int)s_teams[i].team + 50, y, 300, 20), "" + s_teams[i].units.Count);
+        //        y += 20;
+        //    }
+        //}
     }
     #endregion
 
