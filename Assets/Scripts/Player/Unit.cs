@@ -151,13 +151,11 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     
     public void UnitBuisy()
     {
-        Debug.Log("UnitBuisy");
         GameManager.instance.UnitsWithOrders++;
     }
     
     public void UnitDone()
     {
-        Debug.Log("UnitDone");
         GameManager.instance.UnitsWithOrders--;
     }
 

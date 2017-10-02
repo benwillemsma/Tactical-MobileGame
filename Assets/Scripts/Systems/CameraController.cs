@@ -10,7 +10,7 @@ public class CameraController : MonoBehaviour
     {
         thisCamera = GetComponent<Camera>();
         if (!thisCamera)
-            Debug.LogError("CameraScript is not attached to a camera");
+            Destroy(this);
     }
 
     private void Update ()

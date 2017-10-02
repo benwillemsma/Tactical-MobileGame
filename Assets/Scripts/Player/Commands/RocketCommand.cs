@@ -4,37 +4,38 @@ using UnityEngine;
 
 public class RocketCommand : Command
 {
+    Transform lastOrder;
+
     protected override void Start()
     {
         base.Start();
         blankCommand.transform.parent = transform.parent;
         blankCommand.normalLayer = normalLayer;
+
+        if (unit.orders.Count >= 2)
+            lastOrder = unit.orders[unit.orders.Count - 2].transform;
+        else lastOrder = unit.transform;
     }
 
     protected override void Update()
     {
         base.Update();
 
-        if (unit.orders.Count >= 2)
-        {
-            Transform lastOrder = unit.orders[unit.orders.Count - 2].transform;
-            if (selected)
-                blankCommand.transform.position = (transform.position + lastOrder.transform.position) / 2;
-            CurveFromTo(lastOrder.transform.position, blankCommand.transform.position, transform.position, visualMarkers[0]);
-        }
-        else
+        if (lastOrder)
         {
             if (selected)
-                blankCommand.transform.position = (transform.position + unit.transform.position) / 2;
-            CurveFromTo(unit.transform.position, blankCommand.transform.position, transform.position, visualMarkers[0]);
+                blankCommand.transform.position = (transform.position + lastOrder.position) / 2;
+            CurveFromTo(lastOrder.position, blankCommand.transform.position, transform.position, visualMarkers[0]);
         }
     }
 
     public override void Deselected()
     {
         base.Deselected();
+
+#if UNITY_STANDALONE
         blankCommand.Selected();
-        unit.player.Selection = blankCommand;
+#endif
     }
 
     public override void OnDestroy()

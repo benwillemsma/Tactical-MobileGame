@@ -27,16 +27,14 @@ public class CharacterSelector : MonoBehaviour
                 choices[i].rotation = Quaternion.LookRotation(-choices[i].localPosition, Vector3.up);
             }
         }
-
-        Debug.Log(selection + ":" + PlayerPrefs.GetInt("UnitPrefab", 0));
-        selection = PlayerPrefs.GetInt("UnitPrefab", 0);
+        
+        selection = Mathf.Clamp(PlayerPrefs.GetInt("UnitPrefab", 0), 0, selectionOptions);
         transform.Rotate(Vector3.up * 360 / selectionOptions * -selection);
         Name.text = choices[selection].name;
     }
 
     public void NextCharacter(int Delta)
     {
-        Debug.Log(PlayerPrefs.GetInt("UnitPrefab", 0) + ":" + selection);
         selection = (selection + Delta) % selectionOptions;
         if (selection < 0)
             selection += selectionOptions;

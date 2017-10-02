@@ -24,6 +24,7 @@ public class MoveableObject : MonoBehaviour, ISelectable
     {
         selected = true;
         gameObject.layer = 2;
+        PlayerTeam.localTeam.Selection = this;
     }
     public virtual void Deselected()
     {
