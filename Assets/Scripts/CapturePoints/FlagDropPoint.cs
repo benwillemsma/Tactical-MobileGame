@@ -16,11 +16,11 @@ public class FlagDropPoint : CapturePoint
             if (capturingUnits[i].CompareTag("Unit"))
             {
                 Unit unit = capturingUnits[i].GetComponent<Unit>();
-                if (unit.Team == teamAssosiation && unit.hasFlag)
+                if (unit.team == teamAssosiation && unit.hasFlag)
                 {
-                    GameManager.Instance.s_teams[i].score++;
+                    GameManager.instance.s_teams[i].score++;
                     FlagPoint flag = unit.GetComponentInChildren<FlagPoint>();
-                    GameManager.Instance.s_captures.Remove(flag);
+                    GameManager.instance.s_captures.Remove(flag);
                     Destroy(flag.gameObject);
                     unit.hasFlag = false;
                 }

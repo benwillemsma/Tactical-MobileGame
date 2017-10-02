@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 
 public class PlayerTeam : NetworkBehaviour
 {
+    #region Player initialization
     public static PlayerTeam localTeam;
     private Button TurnButton;
     [SerializeField]
@@ -16,9 +17,9 @@ public class PlayerTeam : NetworkBehaviour
 
     [SyncVar, Space(10)]
     public Team team;
-    [SyncVar]
+    [SyncVar, HideInInspector]
     public string teamName;
-    [SyncVar]
+    [SyncVar, HideInInspector]
     public Color teamColor;
     [SyncVar,HideInInspector]
     public int teamLayer;
@@ -28,22 +29,17 @@ public class PlayerTeam : NetworkBehaviour
 
     [HideInInspector]
     public bool canInput = true;
-
-    private float tapCooldown;
     private bool showGUI = false;
 
     private void OnGUI()
     {
-        //if (Debug.isDebugBuild)
-        //{
-        //    int y = -1;
-        //    GUI.color = teamColor;
-        //    if (showGUI)
-        //    {
-        //        GUI.Label(new Rect(100 * (int)team, y, 300, 20), "" + teamName);
-        //        GUI.Label(new Rect(100 * (int)team + 50, y, 300, 20), "" + units.Count);
-        //    }
-        //}
+        if (Debug.isDebugBuild && showGUI)
+        {
+            int y = -1;
+            GUI.color = teamColor;
+            GUI.Label(new Rect(100 * (int)team, y, 300, 20), "" + teamName);
+            GUI.Label(new Rect(100 * (int)team + 50, y, 300, 20), "" + units.Count);
+        }
     }
 
     public override void OnStartLocalPlayer()
@@ -53,72 +49,62 @@ public class PlayerTeam : NetworkBehaviour
         TurnButton.onClick.AddListener(delegate { PlayerReady(); });
     }
 
-    #region Player initialization
-    private void Start()
+    private IEnumerator Start()
     {
-        if(isLocalPlayer)
-            showGUI = true;
+        while (!GameManager.instance)
+            yield return null;
+        GameManager.instance.AddPlayer(this);
 
-        LobbyManager lobbyManager = FindObjectOfType<LobbyManager>();
-        GameManager.Instance.AddPlayer(this);
+        if (isLocalPlayer)
+            showGUI = true;
 
         if (isServer)
         {
-            team = (Team)GameManager.Instance.s_teams.IndexOf(this);
-
+            team = (Team)GameManager.instance.s_teams.IndexOf(this);
             teamLayer = 9 + (int)team;
+            teamName = LobbyPlayer.players[(int)team].teamName;
+            teamColor = LobbyPlayer.players[(int)team].teamColor;
 
-            if (lobbyManager)
-            {
-                teamName = lobbyManager.GetLobbyPlayer((int)team).teamName;
-                teamColor = lobbyManager.GetLobbyPlayer((int)team).teamColor;
-            }
-
+            while (!connectionToClient.isReady)
+                yield return null;
             CmdCreateUnit();
         }
     }
     [Command]
     private void CmdCreateUnit()
     {
-        GameObject unitObject = Instantiate(UnitPrefabs[0], transform.position, transform.rotation);
+        GameObject unitObject = Instantiate(UnitPrefabs[PlayerPrefs.GetInt("UnitPrefab", 0)], transform.position, transform.rotation);
         NetworkServer.SpawnWithClientAuthority(unitObject, connectionToClient);
-        RpcCreateUnit(unitObject);
-    }
-    [ClientRpc]
-    private void RpcCreateUnit(GameObject unitObject)
-    {
         Unit unit = unitObject.GetComponent<Unit>();
-        unit.team = this;
-        unit.Team = team;
+        unit.player = this;
+        unit.team = team;
     }
 
     private void OnDestroy()
     {
-        if (GameManager.Instance)
-            GameManager.Instance.s_teams[(int)team] = null;
+        if (GameManager.instance)
+            GameManager.instance.s_teams.Remove(this);
     }
     #endregion
 
     #region Player Selection/Controls
     private void Update()
     {
-
-        if (tapCooldown > 0)
-            tapCooldown -= Time.deltaTime;
-
         if (gameObject.layer != teamLayer)
             gameObject.layer = teamLayer;
 
         if (isLocalPlayer && canInput)
         {
-            if (Input.GetButtonDown("LeftClick") && tapCooldown <= 0)
-            {
-                tapCooldown = 0.2f;
+            if (Input.GetButtonDown("LeftClick"))
                 CheckSelection(Input.mousePosition);
-            }
+
+            #if UNITY_ANDROID
+            if (Selection != null && Input.GetButtonUp("LeftClick"))
+                CheckSelection(Input.mousePosition);
+            #endif
 
             if (Input.GetKeyDown(KeyCode.Space))
-                PlayerReady();
+            PlayerReady();
         }
     }
     
@@ -129,18 +115,10 @@ public class PlayerTeam : NetworkBehaviour
         {
             ISelectable hitObject = hit.transform.gameObject.GetComponent<ISelectable>();
 
+            if (Selection != null && !Selection.Equals(null))
+                Selection.Deselected();
             if (hitObject != null)
-            {
-                if (Selection != null && !Selection.Equals(null))
-                {
-                    Selection.Action(hit.point);
-                    hitObject.Selected();
-                }
-                else if (hitObject != Selection)
-                    hitObject.Selected();
-            }
-            else if (Selection != null && !Selection.Equals(null))
-                Selection.Action(hit.point);
+                hitObject.Selected();
         }
     }
     #endregion
@@ -172,21 +150,23 @@ public class PlayerTeam : NetworkBehaviour
         CmdPlayerReady();
     }
 
+    [Command]
+    public void CmdPlayerReady()
+    {
+        GameManager.instance.ReadyPlayers++;
+        GameManager.instance.CheckReadyStates();
+    }
+
     [ClientRpc]
     public void RpcToggleReady()
     {
         if (isLocalPlayer)
         {
+            Selection = null;
             canInput = !canInput;
             TurnButton.gameObject.SetActive(canInput);
         }
     }
-
-    [Command]
-    public void CmdPlayerReady()
-    {
-        GameManager.Instance.s_playersReady++;
-        GameManager.Instance.CheckReadyStates();
-    }
     #endregion
 }
+

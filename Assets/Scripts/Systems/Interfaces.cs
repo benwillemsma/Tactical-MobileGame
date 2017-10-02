@@ -3,7 +3,6 @@
 public interface ISelectable
 {
     void Selected();
-    void Action(Vector3 point);
     void Deselected();
     void Cancel();
 }

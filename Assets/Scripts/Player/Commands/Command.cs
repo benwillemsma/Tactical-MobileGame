@@ -107,19 +107,14 @@ public class Command : MoveableObject
     public override void Selected()
     {
         base.Selected();
-        unit.team.Selection = this;
+        unit.player.Selection = this;
     }
-    public override void Action(Vector3 point)
-    {
-        base.Action(point);
-        unit.ToggleCommands(true);
-        transform.position = point;
-    }
+
     public override void Deselected()
     {
         base.Deselected();
         unit.ToggleCommands(true);
-        unit.team.Selection = unit;
+        unit.player.Selection = unit;
     }
 
     public override void Cancel()

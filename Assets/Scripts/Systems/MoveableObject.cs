@@ -10,25 +10,20 @@ public class MoveableObject : MonoBehaviour, ISelectable
     protected virtual void Update()
     {
         if (selected)
-            if (Input.touchCount > 0)
-            {
-                if (Input.GetTouch(0).phase == TouchPhase.Moved)
-                    transform.position = GameManager.ScreenRay(Input.GetTouch(0).position).point;
-                if (Input.GetTouch(0).phase == TouchPhase.Ended)
-                    Action(GameManager.ScreenRay(Input.GetTouch(0).position).point);
-            }
-            else
-                transform.position = GameManager.ScreenRay(Input.mousePosition).point;
+        {
+#if UNITY_STANDALONE
+            transform.position = GameManager.ScreenRay(Input.mousePosition).point;
+#endif
+#if UNITY_ANDROID
+            transform.position = GameManager.ScreenRay(Input.GetTouch(0).position).point;
+#endif
+        }
     }
 
     public virtual void Selected()
     {
         selected = true;
         gameObject.layer = 2;
-    }
-    public virtual void Action(Vector3 point)
-    {
-        Deselected();
     }
     public virtual void Deselected()
     {

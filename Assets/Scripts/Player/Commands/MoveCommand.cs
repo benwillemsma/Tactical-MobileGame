@@ -41,16 +41,14 @@ public class MoveCommand : Command
 
             remainingMove = moves[index - 1].remainingMove - direction.magnitude;
             visualMarkers[0].localScale = Vector3.one * availableMove;
-
-            transform.position = ClosestPointOnNavmesh(start, direction);
         }
         else
         {
             visualMarkers[0].localScale = Vector3.one * unit.maxMoveDistance;
             direction = Vector3.ClampMagnitude(direction, unit.maxMoveDistance);
             remainingMove = unit.maxMoveDistance - direction.magnitude;
-            transform.position = ClosestPointOnNavmesh(start, direction);
         }
+        transform.position = ClosestPointOnNavmesh(start, direction);
 
         if (availableMove < 0.2f)
         {
@@ -73,11 +71,6 @@ public class MoveCommand : Command
             if (unit.orders[i].GetType() == typeof(MoveCommand))
                 moves.Add((MoveCommand)unit.orders[i]);
         }
-    }
-
-    public override void Action(Vector3 point)
-    {
-        base.Action(point);
     }
 
     private Vector3 ClosestPointOnNavmesh(Vector3 start,Vector3 direction)

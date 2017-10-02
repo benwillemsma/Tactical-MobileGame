@@ -30,11 +30,11 @@ public class RocketCommand : Command
         }
     }
 
-    public override void Action(Vector3 point)
+    public override void Deselected()
     {
-        base.Action(point);
+        base.Deselected();
         blankCommand.Selected();
-        unit.team.Selection = blankCommand;
+        unit.player.Selection = blankCommand;
     }
 
     public override void OnDestroy()

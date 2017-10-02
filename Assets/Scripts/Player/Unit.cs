@@ -17,9 +17,9 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
 
     public bool hasFlag = false;
     
-    [SyncVar(hook = "InitUnit"), Space(20)]
-    public Team Team;
-    public PlayerTeam team;
+    [SyncVar]
+    public Team team;
+    public PlayerTeam player;
 
     [Space(20)]
     public List<Command> orders;
@@ -32,28 +32,24 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         agent = GetComponent<NavMeshAgent>();
         orders = new List<Command>();
+
+        InitUnit();
+    }
+    public void InitUnit()
+    {
+        player = GameManager.instance.s_teams[(int)team];
+        gameObject.layer = player.teamLayer;
+        transform.parent = player.transform;
+
         commandUI = transform.GetChild(0).gameObject;
-        Model = transform.GetChild(1).gameObject;
-        objectSpawn = Model.transform.GetChild(0);
-    }
-    public void InitUnit(Team newTeam)
-    {
-        gameObject.layer = team.teamLayer;
-        transform.parent = team.transform;
-
         for (int i = 0; i < commandUI.transform.childCount; i++)
-            commandUI.transform.GetChild(i).gameObject.layer = team.teamLayer;
-        
-        Model.GetComponent<Renderer>().material.color = team.teamColor;
+            commandUI.transform.GetChild(i).gameObject.layer = player.teamLayer;
 
-        team.AddUnits(this);
-    }
+        Model = transform.GetChild(1).gameObject;
+        Model.GetComponent<Renderer>().material.color = player.teamColor;
+        objectSpawn = Model.transform.GetChild(0);
 
-    public void AddOrder(Command newCommand,int index = -1)
-    {
-        if (index == -1)
-            orders.Add(newCommand);
-        else orders.Insert(index, newCommand);
+        player.AddUnits(this);
     }
 
     #endregion
@@ -61,19 +57,14 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     #region ISelectable
     public virtual void Selected()
     {
-        team.Selection = this;
+        player.Selection = this;
         ToggleCommands(true);
-    }
-
-    public virtual void Action(Vector3 point)
-    {
-        Deselected();
     }
 
     public virtual void Deselected()
     {
         ToggleCommands(false);
-        team.Selection = null;
+        player.Selection = null;
     }
 
     public virtual void Cancel() { Deselected(); }
@@ -99,26 +90,33 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         {
             StopAllCoroutines();
             orders.Clear();
-            CmdUnitDone();
+            UnitDone();
         }
 
-        team.RemoveUnits(this);
+        player.RemoveUnits(this);
         Destroy(gameObject);
     }
 
     public void OnDestroy()
     {
         StopAllCoroutines();
-        team.RemoveUnits(this);
+        if(player) player.RemoveUnits(this);
     }
     #endregion
 
     #region Unit Actions
+    public void AddOrder(Command newCommand, int index = -1)
+    {
+        if (index == -1)
+            orders.Add(newCommand);
+        else orders.Insert(index, newCommand);
+    }
+
     public virtual IEnumerator InvokeCommands()
     {
         if (orders.Count > 0)
         {
-            CmdUnitBuisy();
+            UnitBuisy();
 
             while (orders.Count > 0)
             {
@@ -146,21 +144,21 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
                 if (orders.Count > 0)
                     orders[0].Remove();
             }
-            CmdUnitDone();
+            UnitDone();
         }
         actionsRemaining = 2;
     }
-
-    [Command]
-    public void CmdUnitBuisy()
+    
+    public void UnitBuisy()
     {
-        GameManager.Instance.s_unitsWithOrders++;
+        Debug.Log("UnitBuisy");
+        GameManager.instance.UnitsWithOrders++;
     }
-
-    [Command]
-    public void CmdUnitDone()
+    
+    public void UnitDone()
     {
-        GameManager.Instance.s_unitsWithOrders--;
+        Debug.Log("UnitDone");
+        GameManager.instance.UnitsWithOrders--;
     }
 
     public IEnumerator Move(Vector3 destination)

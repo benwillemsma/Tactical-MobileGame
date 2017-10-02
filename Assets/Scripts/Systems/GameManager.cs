@@ -17,34 +17,40 @@ public enum Team
 public class GameManager : NetworkBehaviour
 {
     #region Initilization
+    public static GameManager instance;
     public static NetworkManager netManager;
-    public static GameManager Instance;
 
     [SyncVar]
-    public int s_unitsWithOrders = 0;
+    private int s_unitsWithOrders = 0;
+    public int UnitsWithOrders
+    {
+        get { return s_unitsWithOrders; }
+        set { s_unitsWithOrders = value; }
+    }
     [SyncVar]
-    public int s_playersReady = 0;
+    private int s_playersReady = 0;
+    public int ReadyPlayers
+    {
+        get { return s_playersReady; }
+        set { s_playersReady = value; }
+    }
     [SyncVar]
-    public int s_winner = -1;
+    private int s_winner = -1;
     [SyncVar]
-    public int s_winningScore = 10;
-
+    private int s_winningScore = 10;
+    
+    private Text[] scoreText;
+    private Text timerText;
+    [SyncVar]
+    private float turnTimer = 30;
     public float timerAmount;
 
     public List<PlayerTeam> s_teams = new List<PlayerTeam>();
     public List<CapturePoint> s_captures = new List<CapturePoint>();
-    
-    // GUI
-    private Text[] scoreText;
-    private Text timerText;
-    private float turnTimer = 30;
 
     private void Awake()
     {
-        if (!Instance)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        instance = this;
     }
 
     private void Start()
@@ -54,24 +60,23 @@ public class GameManager : NetworkBehaviour
             scoreText = GameObject.Find("ScoreCanvas").GetComponentsInChildren<Text>();
         if (timerText == null)
             timerText = GameObject.Find("TurnTimer").GetComponent<Text>();
-
-        ClientScene.AddPlayer(netManager.client.connection, 0);
     }
     
     private void OnGUI()
     {
-        //if (Debug.isDebugBuild)
-        //{
-        //    GUI.color = Color.gray;
-        //    GUI.Label(new Rect(550, 20, 300, 20), "GameManager: " + s_teams.Count);
-        //    for (int i = 0; i < s_teams.Count; i++)
-        //    {
-        //        int y = 0;
-        //        GUI.Label(new Rect(100 * (int)s_teams[i].team, y, 300, 20), "" + s_teams[i].teamName);
-        //        GUI.Label(new Rect(100 * (int)s_teams[i].team + 50, y, 300, 20), "" + s_teams[i].units.Count);
-        //        y += 20;
-        //    }
-        //}
+        if (Debug.isDebugBuild)
+        {
+            GUI.color = Color.black;
+            GUI.Label(new Rect(550, 0, 300, 20), "Players: " + s_teams.Count);
+            GUI.Label(new Rect(650, 0, 300, 20), "Ready: " + s_playersReady);
+            for (int i = 0; i < s_teams.Count; i++)
+            {
+                int y = 0;
+                GUI.Label(new Rect(100 * (int)s_teams[i].team, y, 300, 20), "" + s_teams[i].teamName);
+                GUI.Label(new Rect(100 * (int)s_teams[i].team + 50, y, 300, 20), "" + s_teams[i].units.Count);
+                y += 20;
+            }
+        }
     }
     #endregion
 
@@ -84,7 +89,7 @@ public class GameManager : NetworkBehaviour
     {
         s_teams.Remove(Team);
     }
-    
+
     public static RaycastHit ScreenRay(Vector3 point, LayerMask mask)
     {
         RaycastHit hit;
@@ -111,7 +116,7 @@ public class GameManager : NetworkBehaviour
         {
             if (turnTimer > 0)
                 turnTimer -= Time.deltaTime;
-            else if (turnTimer < 0)
+            else if (turnTimer < 0 && isServer)
             {
                 turnTimer = 0;
                 for (int i = 0; i < s_teams.Count; i++)
@@ -150,7 +155,7 @@ public class GameManager : NetworkBehaviour
 
     public void CheckReadyStates()
     {
-        if (s_playersReady >= s_teams.Count)
+        if (s_playersReady >= NetworkServer.connections.Count)
             StartTurn();
     }
 

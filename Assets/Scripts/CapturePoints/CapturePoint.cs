@@ -11,14 +11,14 @@ public class CapturePoint : NetworkBehaviour
     [SyncVar, SerializeField]
     protected Team teamAssosiation;
     [SyncVar]
-    protected Color teamColor = Color.yellow;
+    protected Color teamColor = Color.grey;
 
     public List<Unit> capturingUnits = new List<Unit>();
 
     private void Start()
     {
         if (isServer)
-            GameManager.Instance.s_captures.Add(this);
+            GameManager.instance.s_captures.Add(this);
         GetComponent<Renderer>().material.color = teamColor;
     }
 
@@ -29,11 +29,11 @@ public class CapturePoint : NetworkBehaviour
 
         if (capturingUnits.Count > 0)
         {
-            checkTeam = capturingUnits[0].Team;
+            checkTeam = capturingUnits[0].team;
 
             for (int i = 1; i < capturingUnits.Count; i++)
             {
-                if (checkTeam != capturingUnits[i].GetComponent<Unit>().Team)
+                if (checkTeam != capturingUnits[i].GetComponent<Unit>().team)
                     return;
             }
 
@@ -44,13 +44,13 @@ public class CapturePoint : NetworkBehaviour
                 {
                     captureProgress = 0;
                     teamAssosiation = checkTeam;
-                    teamColor = GameManager.Instance.s_teams[(int)teamAssosiation].teamColor;
+                    teamColor = GameManager.instance.s_teams[(int)teamAssosiation].teamColor;
                     RpcChangeTeams(teamColor);
                 }
             }
         }
         if (teamAssosiation != Team.Neutral)
-            GameManager.Instance.s_teams[(int)teamAssosiation].score++;
+            GameManager.instance.s_teams[(int)teamAssosiation].score++;
     }
 
     [ClientRpc]
