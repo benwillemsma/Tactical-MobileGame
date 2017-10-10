@@ -162,7 +162,8 @@ public class PlayerTeam : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
-            Selection = null;
+            if (Selection != null)
+                Selection.Deselected();
             canInput = !canInput;
             TurnButton.gameObject.SetActive(canInput);
         }
