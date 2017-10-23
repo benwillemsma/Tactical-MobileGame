@@ -39,13 +39,16 @@ public class LobbyPlayer : NetworkLobbyPlayer
     public override void OnStartClient()
     {
         base.OnStartClient();
-
         if (isServer)
-        {
             index = NetworkServer.connections.Count;
-            teamName = PlayerPrefs.GetString("UserName", "Team " + index);
-            teamColor = colors[PlayerPrefs.GetInt("UserColor", index - 1)];
-        }
+    }
+
+    public override void OnStartLocalPlayer()
+    {
+        base.OnStartLocalPlayer();
+
+        teamName = PlayerPrefs.GetString("UserName", "Team " + index);
+        teamColor = colors[PlayerPrefs.GetInt("UserColor", index - 1)];
     }
 
     private void Start()
@@ -73,17 +76,12 @@ public class LobbyPlayer : NetworkLobbyPlayer
             colorOptions.interactable = false;
             nameInput.interactable = false;
         }
-
+        
         nameInput.text = teamName;
+        ChangeName();
         for (int i = 0; i < colors.Length; i++)
-        {
             if (teamColor == colors[i])
-            {
                 colorOptions.value = i;
-                break;
-            }
-        }
-        teamColor = colors[colorOptions.value];
     }
 
     public static Dropdown CreateColorOptions(GameObject dropDownPrefab, Transform parent)

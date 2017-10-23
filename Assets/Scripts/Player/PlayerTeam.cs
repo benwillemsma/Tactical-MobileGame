@@ -14,7 +14,7 @@ public class PlayerTeam : NetworkBehaviour
 
     public List<Unit> units = new List<Unit>();
     public ISelectable Selection;
-
+    
     [SyncVar, Space(10)]
     public Team team;
     [SyncVar, HideInInspector]
@@ -54,20 +54,22 @@ public class PlayerTeam : NetworkBehaviour
         while (!GameManager.instance)
             yield return null;
         GameManager.instance.AddPlayer(this);
-
         if (isLocalPlayer)
             showGUI = true;
 
         if (isServer)
         {
-            team = (Team)GameManager.instance.s_teams.IndexOf(this);
+            team = (Team)GameManager.instance.s_teams.Count - 1;
             teamLayer = 9 + (int)team;
             teamName = LobbyPlayer.players[(int)team].teamName;
             teamColor = LobbyPlayer.players[(int)team].teamColor;
+            GameManager.instance.Output(team + ": " + teamName);
 
             while (!connectionToClient.isReady)
                 yield return null;
             CmdCreateUnit();
+            if ((GameManager.instance.s_playersInit += 1) == NetworkServer.connections.Count)
+                GameManager.instance.PlayersInititilized = true;
         }
     }
     [Command]
@@ -76,7 +78,6 @@ public class PlayerTeam : NetworkBehaviour
         GameObject unitObject = Instantiate(UnitPrefabs[PlayerPrefs.GetInt("UnitPrefab", 0)], transform.position, transform.rotation);
         NetworkServer.SpawnWithClientAuthority(unitObject, connectionToClient);
         Unit unit = unitObject.GetComponent<Unit>();
-        unit.player = this;
         unit.team = team;
     }
 
@@ -102,9 +103,6 @@ public class PlayerTeam : NetworkBehaviour
             if (Selection != null && Input.GetButtonUp("LeftClick"))
                 CheckSelection(Input.mousePosition);
             #endif
-
-            if (Input.GetKeyDown(KeyCode.Space))
-            PlayerReady();
         }
     }
     

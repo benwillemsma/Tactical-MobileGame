@@ -28,8 +28,10 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     private GameObject commandUI;
     private Transform objectSpawn;
 
-    private void Start ()
+    private IEnumerator Start ()
     {
+        while (!GameManager.instance.PlayersInititilized)
+            yield return null;
         agent = GetComponent<NavMeshAgent>();
         orders = new List<Command>();
 
@@ -37,7 +39,12 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     }
     public void InitUnit()
     {
-        player = GameManager.instance.s_teams[(int)team];
+        PlayerTeam[] playerList = FindObjectsOfType<PlayerTeam>();
+        foreach (PlayerTeam player in playerList)
+        {
+            if (player.team == team)
+                this.player = player;
+        }
         gameObject.layer = player.teamLayer;
         transform.parent = player.transform;
 

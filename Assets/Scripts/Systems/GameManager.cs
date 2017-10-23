@@ -20,6 +20,11 @@ public class GameManager : NetworkBehaviour
     public static GameManager instance;
     public static NetworkManager netManager;
 
+    [SyncVar,HideInInspector]
+    public int s_playersInit = 0;
+    [SyncVar, HideInInspector]
+    public bool PlayersInititilized = false;
+
     [SyncVar]
     private int s_unitsWithOrders = 0;
     public int UnitsWithOrders
@@ -47,6 +52,8 @@ public class GameManager : NetworkBehaviour
 
     public List<PlayerTeam> s_teams = new List<PlayerTeam>();
     public List<CapturePoint> s_captures = new List<CapturePoint>();
+
+    private string DebugOutput;
 
     private void Awake()
     {
@@ -76,11 +83,10 @@ public class GameManager : NetworkBehaviour
                 GUI.Label(new Rect(100 * (int)s_teams[i].team + 50, y, 300, 20), "" + s_teams[i].units.Count);
                 y += 20;
             }
+            GUI.Label(new Rect(0, 40, 500, 1000), DebugOutput);
         }
     }
-    #endregion
 
-    #region HelperFunctions
     public void AddPlayer(PlayerTeam newTeam)
     {
         s_teams.Add(newTeam);
@@ -88,6 +94,14 @@ public class GameManager : NetworkBehaviour
     public void RemovePlayer(PlayerTeam Team)
     {
         s_teams.Remove(Team);
+    }
+
+    #endregion
+
+    #region HelperFunctions
+    public void Output(string output)
+    {
+        DebugOutput += "\n" + output;
     }
 
     public static RaycastHit ScreenRay(Vector3 point, LayerMask mask)
@@ -155,6 +169,7 @@ public class GameManager : NetworkBehaviour
 
     public void CheckReadyStates()
     {
+        instance.Output("Players ready:" + s_playersReady + ", Connections:" + NetworkServer.connections.Count);
         if (s_playersReady >= NetworkServer.connections.Count)
             StartTurn();
     }
