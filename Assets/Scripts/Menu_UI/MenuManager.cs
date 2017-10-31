@@ -17,8 +17,21 @@ public class MenuManager : MonoBehaviour
     public static bool training = false;
 
     public Text AddressText;
-    public Text nameText;
-    private int matchIndex;
+
+    private static string DebugOutput;
+    public static void Output(string output)
+    {
+        DebugOutput += "\n" + output;
+    }
+    public static void ClearOutput()
+    {
+        DebugOutput = "";
+    }
+    private void OnGUI()
+    {
+        if (Debug.isDebugBuild)
+            GUI.Label(new Rect(0, 40, 500, 1000), DebugOutput);
+    }
 
     [SerializeField]
     private List<UIGroup> UIGroups = new List<UIGroup>();
@@ -31,7 +44,6 @@ public class MenuManager : MonoBehaviour
 
     private void Start()    
     {
-
         if (!netManager)
         {
             netManager = FindObjectOfType<NetworkLobbyManager>();
@@ -41,16 +53,9 @@ public class MenuManager : MonoBehaviour
         if (SceneManager.GetActiveScene().name == "Multiplayer")
         {
             AddressText = GameObject.Find("ipText").GetComponent<Text>();
-            nameText = GameObject.Find("nameText").GetComponent<Text>();
             SetNetworkAddress();
         }
     }
-
-    //private void Update()
-    //{
-    //    if (Input.GetKeyDown(KeyCode.Home))
-    //        PlayerPrefs.DeleteAll();
-    //}
 
     #region Menu Navigation
     public void Quit()
@@ -176,40 +181,6 @@ public class MenuManager : MonoBehaviour
     {
         if (netManager.matchMaker != null)
             netManager.StopMatchMaker();
-    }
-
-    public void CreateMatch()
-    {
-        if (!NetworkServer.active && !NetworkClient.active)
-        {
-            if (netManager.matchMaker != null && netManager.matchInfo == null && netManager.matches == null)
-            {
-                netManager.matchMaker.CreateMatch(netManager.matchName, netManager.matchSize, true, "", "", "", 0, 1, netManager.OnMatchCreate);
-                netManager.matchName = nameText.text;
-            }
-        }
-    }
-    public void ListMatches()
-    {
-        if (!NetworkServer.active && !NetworkClient.active)
-        {
-            if (netManager.matchMaker != null && netManager.matchInfo == null && netManager.matches == null)
-            {
-                netManager.matchMaker.ListMatches(0, 20, "", true, 1, 1, netManager.OnMatchList);
-            }
-        }
-    }
-    public void JoinMatch()
-    {
-        if (!NetworkServer.active && !NetworkClient.active)
-        {
-            if (netManager.matchMaker != null && netManager.matchInfo == null && netManager.matches != null && netManager.matches.Count > 0)
-            {
-                netManager.matchName = netManager.matches[matchIndex].name;
-                netManager.matchSize = (uint)netManager.matches[matchIndex].currentSize;
-                netManager.matchMaker.JoinMatch(netManager.matches[matchIndex].networkId, "", "", "", 0, 1, netManager.OnMatchJoined);
-            }
-        }
     }
     #endregion
 #endif
