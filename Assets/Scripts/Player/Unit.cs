@@ -145,7 +145,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
                         yield return Melee(orders[0].spawnObject,orders[0].transform.position - transform.position);
                         break;
                     default:
-                        Debug.Log("Command No Implimented:" + orders[0].type);
+                        Debug.Log("Command Not Implimented:" + orders[0].type);
                         break;
                 }
                 if (orders.Count > 0)
@@ -182,7 +182,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        CmdSpawnObject(spawnObject);
+        CmdSpawnObject(8);
         yield return new WaitForSeconds(0.2f);
     }
 
@@ -190,7 +190,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        CmdSpawnObject(spawnObject);
+        CmdSpawnObject(9);
         yield return new WaitForSeconds(0.2f);
     }
 
@@ -198,7 +198,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        CmdSpawnRocket(spawnObject, (rocketCmd as RocketCommand).blankCommand.transform.position, rocketCmd.transform.position);
+        CmdSpawnRocket(10, (rocketCmd as RocketCommand).blankCommand.transform.position, rocketCmd.transform.position);
         yield return new WaitForSeconds(0.2f);
     }
 
@@ -206,20 +206,20 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        CmdSpawnObject(spawnObject);
+        //CmdSpawnObject(spawnObject);
         yield return new WaitForSeconds(0.2f);
     }
 
     [Command]
-    public void CmdSpawnObject(GameObject spawnObject)
+    public void CmdSpawnObject(int ObjectIndex)
     {
-        NetworkServer.Spawn(Instantiate(spawnObject, objectSpawn.position, objectSpawn.rotation));
+        NetworkServer.Spawn(Instantiate(GameManager.netManager.spawnPrefabs[ObjectIndex], objectSpawn.position, objectSpawn.rotation));
     }
 
     [Command]
-    public void CmdSpawnRocket(GameObject spawnObject,params Vector3[] guidePoints)
+    public void CmdSpawnRocket(int ObjectIndex, params Vector3[] guidePoints)
     {
-        GameObject temp = Instantiate(spawnObject, objectSpawn.position, objectSpawn.rotation);
+        GameObject temp = Instantiate(GameManager.netManager.spawnPrefabs[ObjectIndex], objectSpawn.position, objectSpawn.rotation);
         temp.GetComponent<Rocket>().guidePoints = guidePoints;
         NetworkServer.Spawn(temp);
     }
