@@ -10,6 +10,12 @@ public class Rocket : Projectile
     private float elapsedTime;
     
     public Vector3[] guidePoints;
+    [ClientRpc]
+    public void RpcSetGuides(Vector3[] points)
+    {
+        if(points != null)
+            guidePoints = points;
+    }
 
     private void Start()
     {
@@ -18,13 +24,6 @@ public class Rocket : Projectile
 
         for (int i = 0; i < guidePoints.Length; i++)
             guidePoints[i].y = 1.8f;
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.green;
-        for (int i = 0; i < guidePoints.Length; i++)
-            Gizmos.DrawSphere(guidePoints[i], 0.1f);
     }
 
     void Update ()

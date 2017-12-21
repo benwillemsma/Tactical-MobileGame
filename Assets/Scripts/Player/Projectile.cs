@@ -16,6 +16,11 @@ public class Projectile : NetworkBehaviour
         Destroy(gameObject, lifetime);
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        Destroy(gameObject);
+    }
+
     void OnTriggerEnter(Collider other)
     {
         Destroy(gameObject);

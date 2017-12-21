@@ -123,7 +123,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     {
         if (orders.Count > 0)
         {
-            UnitBuisy();
+            UnitBusy();
 
             while (orders.Count > 0)
             {
@@ -133,16 +133,16 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
                         yield return Move(orders[0].transform.position);
                         break;
                     case CommandType.Shoot:
-                        yield return Shoot(orders[0].spawnObject, orders[0].transform.position - transform.position);
+                        yield return DoAttack(orders[0].spawnObject, orders[0].transform.position - transform.position);
                         break;
                     case CommandType.Grenade:
-                        yield return Grenade(orders[0].spawnObject, orders[0].transform.position - transform.position);
+                        yield return DoAttack(orders[0].spawnObject, orders[0].transform.position - transform.position);
                         break;
                     case CommandType.Rocket:
                         yield return Rocket(orders[0].spawnObject, (orders[0] as RocketCommand).blankCommand.transform.position - transform.position, orders[0]);
                         break;
                     case CommandType.Melee:
-                        yield return Melee(orders[0].spawnObject,orders[0].transform.position - transform.position);
+                        yield return DoAttack(orders[0].spawnObject,orders[0].transform.position - transform.position);
                         break;
                     default:
                         Debug.Log("Command Not Implimented:" + orders[0].type);
@@ -156,7 +156,7 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         actionsRemaining = 2;
     }
     
-    public void UnitBuisy()
+    public void UnitBusy()
     {
         GameManager.instance.UnitsWithOrders++;
     }
@@ -178,19 +178,11 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         }
     }
 
-    public IEnumerator Shoot(GameObject spawnObject, Vector3 direction)
+    public IEnumerator DoAttack(GameObject spawnObject, Vector3 direction)
     {
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
-        CmdSpawnObject(8);
-        yield return new WaitForSeconds(0.2f);
-    }
-
-    public IEnumerator Grenade(GameObject spawnObject, Vector3 direction)
-    {
-        transform.LookAt(transform.position + direction);
-        yield return new WaitForSeconds(0.2f);
-        CmdSpawnObject(9);
+        CmdSpawnObject(GameManager.netManager.spawnPrefabs.IndexOf(spawnObject));
         yield return new WaitForSeconds(0.2f);
     }
 
@@ -199,14 +191,6 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
         transform.LookAt(transform.position + direction);
         yield return new WaitForSeconds(0.2f);
         CmdSpawnRocket(10, (rocketCmd as RocketCommand).blankCommand.transform.position, rocketCmd.transform.position);
-        yield return new WaitForSeconds(0.2f);
-    }
-
-    public IEnumerator Melee(GameObject spawnObject, Vector3 direction)
-    {
-        transform.LookAt(transform.position + direction);
-        yield return new WaitForSeconds(0.2f);
-        //CmdSpawnObject(spawnObject);
         yield return new WaitForSeconds(0.2f);
     }
 
@@ -220,8 +204,10 @@ public class Unit : NetworkBehaviour, ISelectable,IDamageable
     public void CmdSpawnRocket(int ObjectIndex, params Vector3[] guidePoints)
     {
         GameObject temp = Instantiate(GameManager.netManager.spawnPrefabs[ObjectIndex], objectSpawn.position, objectSpawn.rotation);
-        temp.GetComponent<Rocket>().guidePoints = guidePoints;
+        Rocket tempRocket = temp.GetComponent<Rocket>();
+        tempRocket.guidePoints = guidePoints;
         NetworkServer.Spawn(temp);
+        tempRocket.RpcSetGuides(guidePoints);
     }
     #endregion
 }
